@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carta Restaurante Pepito</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Georgia', serif;
+      background-color: #f5f5f0;
+      color: #2c2c2c;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        linear-gradient(90deg, #e0e0e0 1px, transparent 1px),
+        linear-gradient(#e0e0e0 1px, transparent 1px);
+      background-size: 20px 20px;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: white;
+      padding: 60px 50px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      position: relative;
+      margin: 20px auto;
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      right: 30px;
+      bottom: 30px;
+      border: 2px solid #333;
+      pointer-events: none;
+    }
+
+    .container::after {
+      content: '';
+      position: absolute;
+      top: 35px;
+      left: 35px;
+      right: 35px;
+      bottom: 35px;
+      border: 1px solid #666;
+      pointer-events: none;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 50px;
+      position: relative;
+    }
+
+    header::before {
+      content: '◆';
+      display: block;
+      color: #333;
+      font-size: 1.2em;
+      margin-bottom: 15px;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      color: #2c2c2c;
+      font-weight: 400;
+      letter-spacing: 4px;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      color: #666;
+      font-size: 1em;
+      font-style: italic;
+      letter-spacing: 1px;
+    }
+
+    header::after {
+      content: '◆';
+      display: block;
+      color: #333;
+      font-size: 1.2em;
+      margin-top: 15px;
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+    }
+
+    .menu-section {
+      margin-bottom: 20px;
+    }
+
+    .collapsible {
+      width: 100%;
+      background: transparent;
+      color: #2c2c2c;
+      padding: 15px 20px;
+      border: none;
+      border-bottom: 1px solid #ddd;
+      font-size: 1.2em;
+      font-weight: 400;
+      text-align: center;
+      cursor: pointer;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-family: 'Georgia', serif;
+      transition: all 0.3s ease;
+    }
+
+    .collapsible:hover {
+      background: #fafafa;
+      color: #000;
+    }
+
+    .collapsible.active {
+      background: #f5f5f5;
+      border-bottom: 2px solid #333;
+    }
+
+    .content {
+      display: none;
+      background: white;
+      padding: 25px 30px;
+    }
+
+    .content ul {
+      list-style: none;
+    }
+
+    .content li {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #f0f0f0;
+      line-height: 1.6;
+    }
+
+    .content li:last-child {
+      border-bottom: none;
+    }
+
+    .dish {
+      font-weight: 600;
+      color: #1a1a1a;
+      font-size: 1.05em;
+      letter-spacing: 0.5px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 0.85em;
+      color: #999;
+      letter-spacing: 1px;
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <header>
+    <h1>Restaurante Pepito</h1>
+    <p>Carta digital 🍽️</p>
+  </header>
+
+  <main>
+
+    <section class="menu-section">
+      <button class="collapsible">Entrantes</button>
+      <div class="content">
+        <ul>
+          <li><span class="dish">Ensalada César</span> – Lechuga, croutons y parmesano</li>
+          <li><span class="dish">Croquetas caseras</span> – Jamón ibérico</li>
+          <li><span class="dish">Tabla de quesos</span> – Selección nacional</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="menu-section">
+      <button class="collapsible">Primeros platos</button>
+      <div class="content">
+        <ul>
+          <li><span class="dish">Paella de marisco</span> – Arroz y mariscos</li>
+          <li><span class="dish">Sopa de verduras</span> – Caldo casero</li>
+          <li><span class="dish">Pasta al pesto</span> – Con piñones</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="menu-section">
+      <button class="collapsible">Segundos platos</button>
+      <div class="content">
+        <ul>
+          <li><span class="dish">Solomillo de ternera</span> – Vino tinto y patatas</li>
+          <li><span class="dish">Salmón a la plancha</span> – Verduras salteadas</li>
+          <li><span class="dish">Pollo al ajillo</span> – Receta tradicional</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="menu-section">
+      <button class="collapsible">Postres</button>
+      <div class="content">
+        <ul>
+          <li><span class="dish">Tarta de chocolate</span></li>
+          <li><span class="dish">Flan casero</span></li>
+          <li><span class="dish">Helados variados</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="menu-section">
+      <button class="collapsible">Bebidas</button>
+      <div class="content">
+        <ul>
+          <li><span class="dish">Agua mineral</span></li>
+          <li><span class="dish">Refrescos</span></li>
+          <li><span class="dish">Cervezas</span> – Normal / sin alcohol</li>
+          <li><span class="dish">Vinos</span> – Tinto / blanco / rosado</li>
+          <li><span class="dish">Café y té</span></li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>© 2026 Restaurante Pepito</p>
+  </footer>
+</div>
+
+<script>
+document.querySelectorAll(".collapsible").forEach(btn => {
+  btn.addEventListener("click", () => {
+    // Cerrar todas las secciones
+    document.querySelectorAll(".collapsible").forEach(otherBtn => {
+      if (otherBtn !== btn) {
+        otherBtn.classList.remove("active");
+        otherBtn.nextElementSibling.style.display = "none";
+      }
+    });
+    
+    // Alternar la sección actual
+    btn.classList.toggle("active");
+    const content = btn.nextElementSibling;
+    content.style.display = content.style.display === "block" ? "none" : "block";
+  });
+});
+</script>
+
+</body>
+</html>

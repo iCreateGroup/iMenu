@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carta Restaurante Pepito</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Cormorant Garamond', 'Georgia', serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+      color: #2c2c2c;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    /* Marco exterior decorativo */
+    .outer-frame {
+      background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 20%, #d4af37 40%, #f4e4bc 60%, #d4af37 80%, #f4e4bc 100%);
+      padding: 8px;
+      border-radius: 5px;
+      box-shadow: 
+        0 0 0 4px #1a1a2e,
+        0 0 30px rgba(212, 175, 55, 0.3),
+        0 20px 60px rgba(0, 0, 0, 0.5);
+      margin: 20px auto;
+    }
+
+    .inner-frame {
+      background: linear-gradient(135deg, #8b7355 0%, #6b5344 50%, #8b7355 100%);
+      padding: 6px;
+      border-radius: 3px;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: linear-gradient(180deg, #fef9e7 0%, #fdf6e3 50%, #f5ebe0 100%);
+      padding: 50px 45px;
+      position: relative;
+      border-radius: 2px;
+    }
+
+    /* Textura de papel antiguo */
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+      pointer-events: none;
+      border-radius: 2px;
+    }
+
+    /* Marco interior decorativo */
+    .decorative-border {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      bottom: 20px;
+      border: 2px solid #8b4513;
+      pointer-events: none;
+    }
+
+    .decorative-border::before {
+      content: '';
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      right: 5px;
+      bottom: 5px;
+      border: 1px solid #a0522d;
+    }
+
+    .decorative-border::after {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      border: 1px dashed #cd853f;
+      opacity: 0.5;
+    }
+
+    /* Esquinas decorativas */
+    .corner {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      color: #8b4513;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .corner-tl { top: 8px; left: 8px; }
+    .corner-tr { top: 8px; right: 8px; }
+    .corner-bl { bottom: 8px; left: 8px; }
+    .corner-br { bottom: 8px; right: 8px; }
+
+    .corner::before {
+      content: '❧';
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .corner-tr::before { transform: rotate(90deg); }
+    .corner-br::before { transform: rotate(180deg); }
+    .corner-bl::before { transform: rotate(270deg); }
+
+    /* Decoración adicional de esquinas con líneas */
+    .corner-line {
+      position: absolute;
+      background: linear-gradient(90deg, #8b4513, transparent);
+      z-index: 5;
+    }
+
+    .corner-line-h {
+      height: 2px;
+      width: 60px;
+    }
+
+    .corner-line-v {
+      width: 2px;
+      height: 60px;
+    }
+
+    .corner-line-tl-h { top: 35px; left: 35px; }
+    .corner-line-tl-v { top: 35px; left: 35px; background: linear-gradient(180deg, #8b4513, transparent); }
+    
+    .corner-line-tr-h { top: 35px; right: 35px; background: linear-gradient(270deg, #8b4513, transparent); }
+    .corner-line-tr-v { top: 35px; right: 35px; background: linear-gradient(180deg, #8b4513, transparent); }
+    
+    .corner-line-bl-h { bottom: 35px; left: 35px; }
+    .corner-line-bl-v { bottom: 35px; left: 35px; background: linear-gradient(0deg, #8b4513, transparent); }
+    
+    .corner-line-br-h { bottom: 35px; right: 35px; background: linear-gradient(270deg, #8b4513, transparent); }
+    .corner-line-br-v { bottom: 35px; right: 35px; background: linear-gradient(0deg, #8b4513, transparent); }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+      z-index: 1;
+      padding-top: 20px;
+    }
+
+    .header-ornament {
+      color: #8b4513;
+      font-size: 1.5em;
+      letter-spacing: 8px;
+      margin-bottom: 15px;
+      opacity: 0.8;
+    }
+
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.8em;
+      color: #3d2914;
+      font-weight: 400;
+      letter-spacing: 6px;
+      margin-bottom: 8px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    header .subtitle {
+      color: #6b5344;
+      font-size: 1.1em;
+      font-style: italic;
+      letter-spacing: 3px;
+      margin-bottom: 15px;
+    }
+
+    .header-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      color: #8b4513;
+      font-size: 1.2em;
+    }
+
+    .header-divider::before,
+    .header-divider::after {
+      content: '';
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #8b4513, transparent);
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      padding: 0 15px;
+    }
+
+    .menu-section {
+      margin-bottom: 15px;
+    }
+
+    .collapsible {
+      width: 100%;
+      background: transparent;
+      color: #3d2914;
+      padding: 18px 25px;
+      border: none;
+      border-top: 1px solid #d4a574;
+      border-bottom: 1px solid #d4a574;
+      font-size: 1.3em;
+      font-weight: 400;
+      text-align: center;
+      cursor: pointer;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      font-family: 'Playfair Display', serif;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .collapsible::before,
+    .collapsible::after {
+      content: '✦';
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #8b4513;
+      font-size: 0.6em;
+      opacity: 0.7;
+    }
+
+    .collapsible::before { left: 15px; }
+    .collapsible::after { right: 15px; }
+
+    .collapsible:hover {
+      background: rgba(139, 69, 19, 0.05);
+      color: #8b4513;
+    }
+
+    .collapsible.active {
+      background: rgba(139, 69, 19, 0.08);
+      border-bottom: 2px solid #8b4513;
+    }
+
+    .collapsible.active::before,
+    .collapsible.active::after {
+      content: '❖';
+      opacity: 1;
+    }
+
+    .content {
+      display: none;
+      background: rgba(255, 255, 255, 0.5);
+      padding: 25px 35px;
+      border-left: 1px solid #d4a574;
+      border-right: 1px solid #d4a574;
+    }
+
+    .content ul {
+      list-style: none;
+    }
+
+    .content li {
+      margin-bottom: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px dotted #d4a574;
+      line-height: 1.7;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .content li::before {
+      content: '◈';
+      color: #8b4513;
+      font-size: 0.7em;
+      flex-shrink: 0;
+    }
+
+    .content li:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .dish {
+      font-family: 'Playfair Display', serif;
+      font-weight: 600;
+      color: #3d2914;
+      font-size: 1.1em;
+      letter-spacing: 0.5px;
+    }
+
+    .description {
+      color: #6b5344;
+      font-style: italic;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-bottom: 15px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-ornament {
+      color: #8b4513;
+      font-size: 1.3em;
+      letter-spacing: 5px;
+      margin-bottom: 10px;
+    }
+
+    footer p {
+      font-size: 0.9em;
+      color: #6b5344;
+      letter-spacing: 2px;
+      font-style: italic;
+    }
+
+    /* Animación suave */
+    .content {
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      .outer-frame { padding: 5px; }
+      .inner-frame { padding: 4px; }
+      .container { padding: 40px 25px; }
+      header h1 { font-size: 2em; letter-spacing: 3px; }
+      .collapsible { font-size: 1.1em; letter-spacing: 2px; padding: 15px; }
+      .decorative-border { top: 15px; left: 15px; right: 15px; bottom: 15px; }
+      .corner { width: 35px; height: 35px; font-size: 20px; }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="outer-frame">
+  <div class="inner-frame">
+    <div class="container">
+      
+      <!-- Marco decorativo interior -->
+      <div class="decorative-border"></div>
+      
+      <!-- Esquinas ornamentales -->
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+      
+      <!-- Líneas de esquina -->
+      <div class="corner-line corner-line-h corner-line-tl-h"></div>
+      <div class="corner-line corner-line-v corner-line-tl-v"></div>
+      <div class="corner-line corner-line-h corner-line-tr-h"></div>
+      <div class="corner-line corner-line-v corner-line-tr-v"></div>
+      <div class="corner-line corner-line-h corner-line-bl-h"></div>
+      <div class="corner-line corner-line-v corner-line-bl-v"></div>
+      <div class="corner-line corner-line-h corner-line-br-h"></div>
+      <div class="corner-line corner-line-v corner-line-br-v"></div>
+
+      <header>
+        <div class="header-ornament">❦ ❦ ❦</div>
+        <h1>Restaurante Pepito</h1>
+        <p class="subtitle">~ Desde 1985 ~</p>
+        <div class="header-divider">⚜</div>
+      </header>
+
+      <main>
+
+        <section class="menu-section">
+          <button class="collapsible">Entrantes</button>
+          <div class="content">
+            <ul>
+              <li><span class="dish">Ensalada César</span> <span class="description">— Lechuga, croutons y parmesano</span></li>
+              <li><span class="dish">Croquetas caseras</span> <span class="description">— Jamón ibérico</span></li>
+              <li><span class="dish">Tabla de quesos</span> <span class="description">— Selección nacional</span></li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="menu-section">
+          <button class="collapsible">Primeros platos</button>
+          <div class="content">
+            <ul>
+              <li><span class="dish">Paella de marisco</span> <span class="description">— Arroz y mariscos frescos</span></li>
+              <li><span class="dish">Sopa de verduras</span> <span class="description">— Caldo casero de la abuela</span></li>
+              <li><span class="dish">Pasta al pesto</span> <span class="description">— Con piñones tostados</span></li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="menu-section">
+          <button class="collapsible">Segundos platos</button>
+          <div class="content">
+            <ul>
+              <li><span class="dish">Solomillo de ternera</span> <span class="description">— Reducción de vino tinto y patatas</span></li>
+              <li><span class="dish">Salmón a la plancha</span> <span class="description">— Verduras salteadas de temporada</span></li>
+              <li><span class="dish">Pollo al ajillo</span> <span class="description">— Receta tradicional española</span></li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="menu-section">
+          <button class="collapsible">Postres</button>
+          <div class="content">
+            <ul>
+              <li><span class="dish">Tarta de chocolate</span> <span class="description">— Elaboración artesanal</span></li>
+              <li><span class="dish">Flan casero</span> <span class="description">— Con caramelo natural</span></li>
+              <li><span class="dish">Helados variados</span> <span class="description">— Selección de sabores</span></li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="menu-section">
+          <button class="collapsible">Bebidas</button>
+          <div class="content">
+            <ul>
+              <li><span class="dish">Agua mineral</span> <span class="description">— Natural o con gas</span></li>
+              <li><span class="dish">Refrescos</span> <span class="description">— Variedad de sabores</span></li>
+              <li><span class="dish">Cervezas</span> <span class="description">— Normal / sin alcohol</span></li>
+              <li><span class="dish">Vinos de la casa</span> <span class="description">— Tinto, blanco y rosado</span></li>
+              <li><span class="dish">Café y té</span> <span class="description">— Selección premium</span></li>
+            </ul>
+          </div>
+        </section>
+
+      </main>
+
+      <footer>
+        <div class="footer-ornament">☙ ❧</div>
+        <p>© 2025 Restaurante Pepito — Buen provecho</p>
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll(".collapsible").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".collapsible").forEach(otherBtn => {
+      if (otherBtn !== btn) {
+        otherBtn.classList.remove("active");
+        otherBtn.nextElementSibling.style.display = "none";
+      }
+    });
+    
+    btn.classList.toggle("active");
+    const content = btn.nextElementSibling;
+    content.style.display = content.style.display === "block" ? "none" : "block";
+  });
+});
+</script>
+
+</body>
+</html>
