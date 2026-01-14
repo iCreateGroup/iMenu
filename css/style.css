@@ -1,0 +1,19 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  background: #111;
+  color: #fff;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.product {
+  border-bottom: 1px solid #333;
+  padding: 10px 0;
+}
+
+.product span {
+  float: right;
+}
