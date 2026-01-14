@@ -6,12 +6,12 @@
 
   <section class="menu-section">
     <button class="collapsible">Primeros platos</button>
-    <div class="content"><ul id="Primeros platos"></ul></div>
+    <div class="content"><ul id="PrimerosPlatos"></ul></div>
   </section>
 
   <section class="menu-section">
     <button class="collapsible">Segundos platos</button>
-    <div class="content"><ul id="Segundos platos"></ul></div>
+    <div class="content"><ul id="SegundosPlatos"></ul></div>
   </section>
 
   <section class="menu-section">
@@ -32,25 +32,29 @@ async function cargarCarta() {
   const { data: menu, error } = await supabase.from('Menu').select('*').order('id')
   if (error) return console.error(error)
 
-  const categorias = ["Entrantes","Primeros platos","Segundos platos","Postres","Bebidas"]
+  const mapCat = {
+    "Entrantes": "Entrantes",
+    "Primeros platos": "PrimerosPlatos",
+    "Segundos platos": "SegundosPlatos",
+    "Postres": "Postres",
+    "Bebidas": "Bebidas"
+  }
 
-  categorias.forEach(cat => {
-    const ul = document.getElementById(cat)
-    ul.innerHTML = ''
-    menu.filter(item => item.categoria === cat)
-        .forEach(item => {
-          const li = document.createElement('li')
-          li.innerHTML = `
-            <div style="display:flex; justify-content:space-between;">
-              <div>
-                <span class="dish">${item.plato}</span>
-                ${item.descripcion ? ' – ' + item.descripcion : ''}
-              </div>
-              ${item.precio ? `<div class="precio">€${item.precio}</div>` : ''}
-            </div>
-          `
-          ul.appendChild(li)
-        })
+  menu.forEach(item => {
+    const ul = document.getElementById(mapCat[item.categoria])
+    if (!ul) return
+    const li = document.createElement('li')
+    li.style.display = 'flex'
+    li.style.justifyContent = 'space-between'
+    li.style.marginBottom = '10px'
+    li.innerHTML = `
+      <div>
+        <span class="dish">${item.plato}</span>
+        ${item.descripcion ? ' – ' + item.descripcion : ''}
+      </div>
+      ${item.precio ? `<div class="precio">€${item.precio}</div>` : ''}
+    `
+    ul.appendChild(li)
   })
 }
 
