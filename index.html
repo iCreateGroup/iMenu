@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Carta Restaurante Pepito</title>
-<!-- Enlaza tu CSS externo -->
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -47,7 +46,6 @@
   </footer>
 </div>
 
-<!-- ==== Script para cargar platos desde Supabase ==== -->
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
@@ -55,8 +53,19 @@ const supabaseUrl = 'https://qozzxdrjwjskmwmxscqj.supabase.co'
 const supabaseKey = 'sb_publishable_UtBfupVv8e2zniYdv1jvEA_SXIyWE0Z'
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-async function cargarCarta() {
-  const { data: menu, error } = await supabase.from('Menu').select('*').order('id')
+// Obtener clienteId desde query string
+const params = new URLSearchParams(window.location.search)
+const clienteId = params.get('cliente') // UUID del usuario
+
+async function cargarCarta(clienteId) {
+  if (!clienteId) return // no hay usuario, carta vacía
+
+  const { data: menu, error } = await supabase
+    .from('Menu')
+    .select('*')
+    .eq('user_id', clienteId)
+    .order('id')
+
   if (error) return console.error(error)
 
   const mapCat = {
@@ -85,7 +94,7 @@ async function cargarCarta() {
   })
 }
 
-// Collapsible
+// Collapsibles
 document.querySelectorAll(".collapsible").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".collapsible").forEach(otherBtn => {
@@ -100,7 +109,8 @@ document.querySelectorAll(".collapsible").forEach(btn => {
   })
 })
 
-cargarCarta()
+// Cargar carta si hay clienteId
+if (clienteId) cargarCarta(clienteId)
 </script>
 
 </body>
