@@ -3,64 +3,118 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Admin Menu</title>
-<link rel="stylesheet" href="css/styles.css">
+<title>Panel Admin Completo</title>
 <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Georgia', serif; background-color: #f5f5f0; color: #2c2c2c; padding: 20px; }
-  .admin-container { max-width: 800px; margin: 20px auto; background: white; padding: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border-radius: 8px; }
-  h1, h2 { text-align: center; margin-bottom: 20px; }
-  #login-form input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; }
-  #login-form button { width: 100%; padding: 10px; margin-top: 10px; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  .admin-container { max-width: 1200px; margin: 20px auto; background: white; padding: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border-radius: 8px; }
+  h1, h2, h3 { margin-bottom: 20px; }
+  h1 { text-align: center; }
+  
+  /* Login */
+  #login-form input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; }
+  #login-form button { width: 100%; padding: 12px; margin-top: 10px; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
   #login-form button:hover { background-color: #555; }
+  #loginError { color: red; margin-top: 10px; }
 
-  .categoria { margin-top: 30px; }
-  .categoria h3 { border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 10px; }
-  .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #eee; border-radius: 4px; margin-bottom: 5px; background: #fafafa; }
-  .menu-item span { flex: 1; }
-  .menu-item button { background-color: #c0392b; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-  .menu-item button:hover { background-color: #e74c3c; }
+  /* Tabs */
+  .tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid #eee; }
+  .tab { padding: 12px 24px; cursor: pointer; background: transparent; border: none; font-size: 16px; color: #666; transition: all 0.3s; }
+  .tab.active { color: #333; font-weight: 600; border-bottom: 3px solid #333; }
+  .tab:hover { background: #fafafa; }
+  
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
 
-  .add-form { margin-top: 20px; display: grid; gap: 10px; }
-  .add-form input, .add-form select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-  .add-form button { padding: 10px; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; }
-  .add-form button:hover { background-color: #2ecc71; }
+  /* Categorías */
+  .categoria-item { display: flex; align-items: center; gap: 15px; padding: 15px; border: 1px solid #eee; border-radius: 6px; margin-bottom: 10px; background: #fafafa; }
+  .categoria-item.inactiva { opacity: 0.5; background: #f0f0f0; }
+  .drag-handle { cursor: move; font-size: 20px; color: #999; }
+  .categoria-nombre { flex: 1; font-weight: 600; }
+  .categoria-actions { display: flex; gap: 8px; }
+  .categoria-actions button { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+  .btn-editar { background-color: #3498db; color: white; }
+  .btn-editar:hover { background-color: #2980b9; }
+  .btn-toggle { background-color: #f39c12; color: white; }
+  .btn-toggle:hover { background-color: #e67e22; }
+  .btn-eliminar { background-color: #e74c3c; color: white; }
+  .btn-eliminar:hover { background-color: #c0392b; }
 
-  #logoutBtn { margin-top: 20px; background-color: #333; color: white; width: 100%; padding: 10px; border-radius: 4px; cursor: pointer; }
+  /* Formularios */
+  .form-box { background: #f8f9fa; padding: 20px; border-radius: 6px; margin-bottom: 30px; }
+  .form-box input, .form-box select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; }
+  .form-box button { padding: 10px 20px; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+  .form-box button:hover { background-color: #2ecc71; }
+  .form-box button.cancel { background-color: #95a5a6; margin-left: 10px; }
+  .form-box button.cancel:hover { background-color: #7f8c8d; }
+
+  /* Platos */
+  .platos-por-categoria { margin-bottom: 40px; }
+  .platos-por-categoria h3 { border-bottom: 2px solid #333; padding-bottom: 8px; margin-bottom: 15px; }
+  .plato-item { display: flex; align-items: center; gap: 15px; padding: 12px; border: 1px solid #eee; border-radius: 6px; margin-bottom: 8px; background: white; }
+  .plato-item.inactivo { opacity: 0.5; background: #f9f9f9; }
+  .plato-info { flex: 1; }
+  .plato-nombre { font-weight: 600; color: #1a1a1a; }
+  .plato-descripcion { font-size: 14px; color: #666; margin-top: 4px; }
+  .plato-precio { font-weight: 600; color: #27ae60; white-space: nowrap; margin-right: 15px; }
+  .plato-actions { display: flex; gap: 8px; }
+  .plato-actions button { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
+
+  #logoutBtn { margin-top: 30px; background-color: #333; color: white; width: 100%; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
   #logoutBtn:hover { background-color: #555; }
+
+  .empty-state { text-align: center; padding: 40px; color: #999; font-style: italic; }
 </style>
 </head>
 <body>
 
 <div class="admin-container">
-  <h1>Panel Admin Menu</h1>
+  <h1>🍽️ Panel de Administración</h1>
 
   <div id="login-form">
+    <h2 style="text-align: center; margin-bottom: 20px;">Iniciar Sesión</h2>
     <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
-    <button id="loginBtn">Login</button>
-    <p id="loginError" style="color:red"></p>
+    <input type="password" id="password" placeholder="Contraseña">
+    <button id="loginBtn">Entrar</button>
+    <p id="loginError"></p>
   </div>
 
   <div id="admin-panel" style="display:none;">
-    <h2>Tu menú</h2>
-    <div id="menuContainer"></div>
-
-    <div class="add-form">
-      <h3>Agregar plato</h3>
-      <input id="newPlato" placeholder="Plato">
-      <input id="newDesc" placeholder="Descripción">
-      <input id="newPrecio" type="number" placeholder="Precio">
-      <select id="newCat">
-        <option>Entrantes</option>
-        <option>Primeros platos</option>
-        <option>Segundos platos</option>
-        <option>Postres</option>
-        <option>Bebidas</option>
-      </select>
-      <button id="addBtn">Agregar plato</button>
+    <div class="tabs">
+      <button class="tab active" data-tab="categorias">Categorías</button>
+      <button class="tab" data-tab="platos">Platos</button>
     </div>
 
-    <button id="logoutBtn">Logout</button>
+    <!-- TAB CATEGORÍAS -->
+    <div id="tab-categorias" class="tab-content active">
+      <div class="form-box">
+        <h3 id="categoria-form-title">➕ Nueva Categoría</h3>
+        <input type="hidden" id="editCategoriaId">
+        <input id="categoriaNombre" placeholder="Nombre de la categoría">
+        <button id="guardarCategoriaBtn">Guardar</button>
+        <button class="cancel" id="cancelCategoriaBtn" style="display:none;">Cancelar</button>
+      </div>
+
+      <div id="categoriasContainer"></div>
+    </div>
+
+    <!-- TAB PLATOS -->
+    <div id="tab-platos" class="tab-content">
+      <div class="form-box">
+        <h3 id="plato-form-title">➕ Nuevo Plato</h3>
+        <input type="hidden" id="editPlatoId">
+        <input id="platoNombre" placeholder="Nombre del plato">
+        <input id="platoDescripcion" placeholder="Descripción">
+        <input id="platoPrecio" type="number" step="0.01" placeholder="Precio (€)">
+        <select id="platoCategoria"></select>
+        <button id="guardarPlatoBtn">Guardar</button>
+        <button class="cancel" id="cancelPlatoBtn" style="display:none;">Cancelar</button>
+      </div>
+
+      <div id="platosContainer"></div>
+    </div>
+
+    <button id="logoutBtn">Cerrar Sesión</button>
   </div>
 </div>
 
@@ -72,9 +126,8 @@ const supabaseKey = 'sb_publishable_UtBfupVv8e2zniYdv1jvEA_SXIyWE0Z'
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 let user = null
-const categorias = ["Entrantes","Primeros platos","Segundos platos","Postres","Bebidas"]
 
-// Login
+// LOGIN
 document.getElementById('loginBtn').onclick = async () => {
   const email = document.getElementById('email').value
   const password = document.getElementById('password').value
@@ -86,67 +139,344 @@ document.getElementById('loginBtn').onclick = async () => {
   user = data.user
   document.getElementById('login-form').style.display = 'none'
   document.getElementById('admin-panel').style.display = 'block'
-  cargarMenu()
+  cargarTodo()
 }
 
-// Logout
+// LOGOUT
 document.getElementById('logoutBtn').onclick = async () => {
   await supabase.auth.signOut()
-  user = null
-  document.getElementById('admin-panel').style.display = 'none'
-  document.getElementById('login-form').style.display = 'block'
+  location.reload()
 }
 
-// Cargar menú por categoría
-async function cargarMenu() {
-  const { data: menu, error } = await supabase
-    .from('Menu')
+// TABS
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'))
+    tab.classList.add('active')
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active')
+  }
+})
+
+// ========== CATEGORÍAS ==========
+
+async function cargarCategorias() {
+  const { data: categorias } = await supabase
+    .from('Categorias')
     .select('*')
     .eq('user_id', user.id)
-    .order('id')
+    .order('orden', { ascending: true })
 
-  const container = document.getElementById('menuContainer')
+  const container = document.getElementById('categoriasContainer')
   container.innerHTML = ''
 
+  if (!categorias || categorias.length === 0) {
+    container.innerHTML = '<div class="empty-state">No hay categorías. ¡Crea la primera!</div>'
+    return
+  }
+
   categorias.forEach(cat => {
-    const catDiv = document.createElement('div')
-    catDiv.className = 'categoria'
-    const catHeader = document.createElement('h3')
-    catHeader.textContent = cat
-    catDiv.appendChild(catHeader)
+    const div = document.createElement('div')
+    div.className = 'categoria-item' + (cat.activa ? '' : ' inactiva')
+    div.dataset.id = cat.id
+    div.innerHTML = `
+      <span class="drag-handle">☰</span>
+      <div class="categoria-nombre">${cat.nombre} ${cat.activa ? '' : '(Desactivada)'}</div>
+      <div class="categoria-actions">
+        <button class="btn-editar" data-id="${cat.id}">✏️ Editar</button>
+        <button class="btn-toggle" data-id="${cat.id}">${cat.activa ? '👁️ Ocultar' : '👁️ Mostrar'}</button>
+        <button class="btn-eliminar" data-id="${cat.id}">🗑️ Eliminar</button>
+      </div>
+    `
+    container.appendChild(div)
+  })
 
-    const catItems = menu.filter(item => item.categoria === cat)
-    catItems.forEach(item => {
-      const div = document.createElement('div')
-      div.className = 'menu-item'
-      div.innerHTML = `
-        <span>${item.plato} – ${item.descripcion}${item.precio ? ' – €'+item.precio : ''}</span>
-        <button data-id="${item.id}">Borrar</button>
-      `
-      div.querySelector('button').onclick = async () => {
-        await supabase.from('Menu').delete().eq('id', item.id)
-        cargarMenu()
+  // Eventos
+  container.querySelectorAll('.btn-editar').forEach(btn => {
+    btn.onclick = () => editarCategoria(btn.dataset.id, categorias)
+  })
+  container.querySelectorAll('.btn-toggle').forEach(btn => {
+    btn.onclick = () => toggleCategoria(btn.dataset.id, categorias)
+  })
+  container.querySelectorAll('.btn-eliminar').forEach(btn => {
+    btn.onclick = () => eliminarCategoria(btn.dataset.id)
+  })
+
+  // Drag and drop para reordenar
+  makeSortable(container, categorias)
+
+  // Actualizar select de categorías en platos
+  actualizarSelectCategorias(categorias)
+}
+
+function makeSortable(container, categorias) {
+  let draggedElement = null
+
+  container.querySelectorAll('.categoria-item').forEach(item => {
+    item.draggable = true
+    
+    item.ondragstart = (e) => {
+      draggedElement = item
+      item.style.opacity = '0.5'
+    }
+    
+    item.ondragend = () => {
+      item.style.opacity = '1'
+      draggedElement = null
+    }
+    
+    item.ondragover = (e) => {
+      e.preventDefault()
+    }
+    
+    item.ondrop = async (e) => {
+      e.preventDefault()
+      if (draggedElement && draggedElement !== item) {
+        const allItems = [...container.querySelectorAll('.categoria-item')]
+        const draggedIndex = allItems.indexOf(draggedElement)
+        const targetIndex = allItems.indexOf(item)
+        
+        if (draggedIndex < targetIndex) {
+          item.after(draggedElement)
+        } else {
+          item.before(draggedElement)
+        }
+        
+        // Actualizar orden en BD
+        await actualizarOrdenCategorias(container)
       }
-      catDiv.appendChild(div)
-    })
-
-    container.appendChild(catDiv)
+    }
   })
 }
 
-// Agregar plato
-document.getElementById('addBtn').onclick = async () => {
-  const plato = document.getElementById('newPlato').value
-  const desc = document.getElementById('newDesc').value
-  const precio = document.getElementById('newPrecio').value
-  const cat = document.getElementById('newCat').value
-  if (!plato) return alert('El plato es obligatorio')
+async function actualizarOrdenCategorias(container) {
+  const items = [...container.querySelectorAll('.categoria-item')]
+  for (let i = 0; i < items.length; i++) {
+    const id = items[i].dataset.id
+    await supabase.from('Categorias').update({ orden: i }).eq('id', id)
+  }
+}
 
-  await supabase.from('Menu').insert([{ plato, descripcion: desc, precio, categoria: cat, user_id: user.id }])
-  document.getElementById('newPlato').value = ''
-  document.getElementById('newDesc').value = ''
-  document.getElementById('newPrecio').value = ''
-  cargarMenu()
+function editarCategoria(id, categorias) {
+  const cat = categorias.find(c => c.id == id)
+  document.getElementById('editCategoriaId').value = id
+  document.getElementById('categoriaNombre').value = cat.nombre
+  document.getElementById('categoria-form-title').textContent = '✏️ Editar Categoría'
+  document.getElementById('cancelCategoriaBtn').style.display = 'inline-block'
+}
+
+async function toggleCategoria(id, categorias) {
+  const cat = categorias.find(c => c.id == id)
+  await supabase.from('Categorias').update({ activa: !cat.activa }).eq('id', id)
+  cargarCategorias()
+}
+
+async function eliminarCategoria(id) {
+  if (!confirm('¿Eliminar esta categoría? Los platos asociados quedarán sin categoría.')) return
+  await supabase.from('Categorias').delete().eq('id', id)
+  cargarCategorias()
+  cargarPlatos()
+}
+
+document.getElementById('guardarCategoriaBtn').onclick = async () => {
+  const nombre = document.getElementById('categoriaNombre').value.trim()
+  if (!nombre) return alert('El nombre es obligatorio')
+
+  const editId = document.getElementById('editCategoriaId').value
+
+  if (editId) {
+    await supabase.from('Categorias').update({ nombre }).eq('id', editId)
+  } else {
+    const { data: maxOrden } = await supabase
+      .from('Categorias')
+      .select('orden')
+      .eq('user_id', user.id)
+      .order('orden', { ascending: false })
+      .limit(1)
+    
+    const nuevoOrden = maxOrden && maxOrden.length > 0 ? maxOrden[0].orden + 1 : 0
+
+    await supabase.from('Categorias').insert({
+      nombre,
+      orden: nuevoOrden,
+      user_id: user.id
+    })
+  }
+
+  limpiarFormCategoria()
+  cargarCategorias()
+}
+
+document.getElementById('cancelCategoriaBtn').onclick = limpiarFormCategoria
+
+function limpiarFormCategoria() {
+  document.getElementById('editCategoriaId').value = ''
+  document.getElementById('categoriaNombre').value = ''
+  document.getElementById('categoria-form-title').textContent = '➕ Nueva Categoría'
+  document.getElementById('cancelCategoriaBtn').style.display = 'none'
+}
+
+// ========== PLATOS ==========
+
+async function cargarPlatos() {
+  const { data: categorias } = await supabase
+    .from('Categorias')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('orden')
+
+  const { data: platos } = await supabase
+    .from('Menu')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('orden')
+
+  const container = document.getElementById('platosContainer')
+  container.innerHTML = ''
+
+  if (!categorias || categorias.length === 0) {
+    container.innerHTML = '<div class="empty-state">Primero crea categorías en la pestaña anterior.</div>'
+    return
+  }
+
+  categorias.forEach(cat => {
+    const catDiv = document.createElement('div')
+    catDiv.className = 'platos-por-categoria'
+    
+    const catPlatos = platos.filter(p => p.categoria_id == cat.id)
+    
+    catDiv.innerHTML = `<h3>${cat.nombre}</h3>`
+    
+    if (catPlatos.length === 0) {
+      catDiv.innerHTML += '<div class="empty-state">No hay platos en esta categoría</div>'
+    } else {
+      catPlatos.forEach(plato => {
+        const platoDiv = document.createElement('div')
+        platoDiv.className = 'plato-item' + (plato.activo ? '' : ' inactivo')
+        platoDiv.innerHTML = `
+          <div class="plato-info">
+            <div class="plato-nombre">${plato.plato} ${plato.activo ? '' : '(Desactivado)'}</div>
+            ${plato.descripcion ? `<div class="plato-descripcion">${plato.descripcion}</div>` : ''}
+          </div>
+          ${plato.precio ? `<div class="plato-precio">${plato.precio}€</div>` : ''}
+          <div class="plato-actions">
+            <button class="btn-editar" data-id="${plato.id}">✏️</button>
+            <button class="btn-toggle" data-id="${plato.id}">${plato.activo ? '👁️' : '✓'}</button>
+            <button class="btn-eliminar" data-id="${plato.id}">🗑️</button>
+          </div>
+        `
+        catDiv.appendChild(platoDiv)
+      })
+    }
+    
+    container.appendChild(catDiv)
+  })
+
+  // Eventos
+  container.querySelectorAll('.btn-editar').forEach(btn => {
+    btn.onclick = () => editarPlato(btn.dataset.id, platos)
+  })
+  container.querySelectorAll('.btn-toggle').forEach(btn => {
+    btn.onclick = () => togglePlato(btn.dataset.id, platos)
+  })
+  container.querySelectorAll('.btn-eliminar').forEach(btn => {
+    btn.onclick = () => eliminarPlato(btn.dataset.id)
+  })
+}
+
+function editarPlato(id, platos) {
+  const plato = platos.find(p => p.id == id)
+  document.getElementById('editPlatoId').value = id
+  document.getElementById('platoNombre').value = plato.plato
+  document.getElementById('platoDescripcion').value = plato.descripcion || ''
+  document.getElementById('platoPrecio').value = plato.precio || ''
+  document.getElementById('platoCategoria').value = plato.categoria_id || ''
+  document.getElementById('plato-form-title').textContent = '✏️ Editar Plato'
+  document.getElementById('cancelPlatoBtn').style.display = 'inline-block'
+  
+  // Scroll al formulario
+  document.getElementById('tab-platos').scrollIntoView({ behavior: 'smooth' })
+}
+
+async function togglePlato(id, platos) {
+  const plato = platos.find(p => p.id == id)
+  await supabase.from('Menu').update({ activo: !plato.activo }).eq('id', id)
+  cargarPlatos()
+}
+
+async function eliminarPlato(id) {
+  if (!confirm('¿Eliminar este plato?')) return
+  await supabase.from('Menu').delete().eq('id', id)
+  cargarPlatos()
+}
+
+document.getElementById('guardarPlatoBtn').onclick = async () => {
+  const nombre = document.getElementById('platoNombre').value.trim()
+  const descripcion = document.getElementById('platoDescripcion').value.trim()
+  const precio = document.getElementById('platoPrecio').value
+  const categoriaId = document.getElementById('platoCategoria').value
+
+  if (!nombre) return alert('El nombre es obligatorio')
+  if (!categoriaId) return alert('Selecciona una categoría')
+
+  const editId = document.getElementById('editPlatoId').value
+
+  if (editId) {
+    await supabase.from('Menu').update({
+      plato: nombre,
+      descripcion,
+      precio: precio || null,
+      categoria_id: categoriaId
+    }).eq('id', editId)
+  } else {
+    const { data: maxOrden } = await supabase
+      .from('Menu')
+      .select('orden')
+      .eq('user_id', user.id)
+      .eq('categoria_id', categoriaId)
+      .order('orden', { ascending: false })
+      .limit(1)
+    
+    const nuevoOrden = maxOrden && maxOrden.length > 0 ? maxOrden[0].orden + 1 : 0
+
+    await supabase.from('Menu').insert({
+      plato: nombre,
+      descripcion,
+      precio: precio || null,
+      categoria_id: categoriaId,
+      user_id: user.id,
+      orden: nuevoOrden,
+      activo: true
+    })
+  }
+
+  limpiarFormPlato()
+  cargarPlatos()
+}
+
+document.getElementById('cancelPlatoBtn').onclick = limpiarFormPlato
+
+function limpiarFormPlato() {
+  document.getElementById('editPlatoId').value = ''
+  document.getElementById('platoNombre').value = ''
+  document.getElementById('platoDescripcion').value = ''
+  document.getElementById('platoPrecio').value = ''
+  document.getElementById('platoCategoria').value = ''
+  document.getElementById('plato-form-title').textContent = '➕ Nuevo Plato'
+  document.getElementById('cancelPlatoBtn').style.display = 'none'
+}
+
+function actualizarSelectCategorias(categorias) {
+  const select = document.getElementById('platoCategoria')
+  select.innerHTML = '<option value="">-- Selecciona categoría --</option>'
+  categorias.filter(c => c.activa).forEach(cat => {
+    select.innerHTML += `<option value="${cat.id}">${cat.nombre}</option>`
+  })
+}
+
+async function cargarTodo() {
+  await cargarCategorias()
+  await cargarPlatos()
 }
 </script>
 
