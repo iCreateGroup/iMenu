@@ -85,19 +85,20 @@ async function cargarCarta() {
 
   const categorias = ["Entrantes","Primeros platos","Segundos platos","Postres","Bebidas"]
 
-  categorias.forEach(cat => {
-    const section = [...document.querySelectorAll(".menu-section")]
-                     .find(s => s.querySelector(".collapsible").textContent.trim() === cat)
-    if (!section) return
-    const ul = section.querySelector("ul")
-    ul.innerHTML = '' // limpiar antes
-    menu.filter(item => item.categoria === cat)
-        .forEach(item => {
-          const li = document.createElement('li')
-          li.innerHTML = `<span class="dish">${item.plato}</span>${item.descripcion ? ' – ' + item.descripcion : ''}${item.precio ? ' – €' + item.precio : ''}`
-          ul.appendChild(li)
-        })
-  })
+categorias.forEach(cat => {
+  const section = [...document.querySelectorAll(".menu-section")]
+                   .find(s => s.querySelector(".collapsible").textContent.trim() === cat)
+  if (!section) return
+  const ul = section.querySelector("ul")
+  ul.innerHTML = '' // limpiar antes
+  menu.filter(item => item.categoria?.trim().toLowerCase() === cat.toLowerCase())
+      .forEach(item => {
+        const li = document.createElement('li')
+        li.innerHTML = `<span class="dish">${item.plato}</span>${item.descripcion ? ' – ' + item.descripcion : ''}${item.precio ? ' – €' + item.precio : ''}`
+        ul.appendChild(li)
+      })
+})
+
 }
 
 cargarCarta()
