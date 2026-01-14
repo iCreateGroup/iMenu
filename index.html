@@ -1,52 +1,56 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Carta Restaurante Pepito</title>
-<link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
+<main>
+  <section class="menu-section">
+    <button class="collapsible">Entrantes</button>
+    <div class="content"><ul id="Entrantes"></ul></div>
+  </section>
 
-<div class="container">
-  <header>
-    <h1>Restaurante Pepito</h1>
-    <p>Carta digital 🍽️</p>
-  </header>
+  <section class="menu-section">
+    <button class="collapsible">Primeros platos</button>
+    <div class="content"><ul id="Primeros platos"></ul></div>
+  </section>
 
-  <main>
-    <section class="menu-section" id="menuDisplay">
-      <button class="collapsible">Carta</button>
-      <div class="content"><ul></ul></div>
-    </section>
-  </main>
+  <section class="menu-section">
+    <button class="collapsible">Segundos platos</button>
+    <div class="content"><ul id="Segundos platos"></ul></div>
+  </section>
 
-  <footer>
-    <p>© 2026 Restaurante Pepito</p>
-  </footer>
-</div>
+  <section class="menu-section">
+    <button class="collapsible">Postres</button>
+    <div class="content"><ul id="Postres"></ul></div>
+  </section>
+
+  <section class="menu-section">
+    <button class="collapsible">Bebidas</button>
+    <div class="content"><ul id="Bebidas"></ul></div>
+  </section>
+</main>
 
 <script type="module">
-import { supabase, getMenu } from './js/supabase.js'
-
-const cartaUl = document.querySelector("#menuDisplay ul")
+import { supabase } from './js/supabase.js'
 
 async function cargarCarta() {
-  // Carga todos los platos de la tabla, sin filtrar por usuario
   const { data: menu, error } = await supabase.from('Menu').select('*').order('id')
   if (error) return console.error(error)
 
-  cartaUl.innerHTML = ''
-  menu.forEach(item => {
-    const li = document.createElement('li')
-    li.innerHTML = `
-      <div class="left">
-        <span class="dish">${item.plato}</span>
-        ${item.descripcion ? `<span class="descripcion">${item.descripcion}</span>` : ''}
-      </div>
-      ${item.precio ? `<span class="precio">€${item.precio}</span>` : ''}
-    `
-    cartaUl.appendChild(li)
+  const categorias = ["Entrantes","Primeros platos","Segundos platos","Postres","Bebidas"]
+
+  categorias.forEach(cat => {
+    const ul = document.getElementById(cat)
+    ul.innerHTML = ''
+    menu.filter(item => item.categoria === cat)
+        .forEach(item => {
+          const li = document.createElement('li')
+          li.innerHTML = `
+            <div style="display:flex; justify-content:space-between;">
+              <div>
+                <span class="dish">${item.plato}</span>
+                ${item.descripcion ? ' – ' + item.descripcion : ''}
+              </div>
+              ${item.precio ? `<div class="precio">€${item.precio}</div>` : ''}
+            </div>
+          `
+          ul.appendChild(li)
+        })
   })
 }
 
@@ -67,6 +71,3 @@ document.querySelectorAll(".collapsible").forEach(btn => {
 
 cargarCarta()
 </script>
-
-</body>
-</html>
