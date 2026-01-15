@@ -143,6 +143,7 @@
     margin-bottom: 15px;
     padding-bottom: 10px;
     border-bottom: 1px solid #f0f0f0;
+    gap: 15px;
   }
 
   .content li:last-child {
@@ -151,7 +152,7 @@
 
   .plato-info {
     flex: 1;
-    margin-right: 15px;
+    min-width: 0;
   }
 
   .dish { 
@@ -171,30 +172,45 @@
     margin-bottom: 6px;
   }
 
+  .plato-derecha {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
   .alergenos {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
-    margin-top: 8px;
+    align-items: center;
   }
 
   .alergenos img {
-    width: 24px;
-    height: 24px;
-    opacity: 0.85;
-    transition: opacity 0.2s;
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    opacity: 0.9;
+    transition: all 0.2s;
+    background: #f9f9f9;
+    border-radius: 50%;
+    padding: 4px;
+    border: 1px solid #eee;
   }
 
   .alergenos img:hover {
     opacity: 1;
+    transform: scale(1.15);
+    border-color: #ddd;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   }
 
   .precio {
     font-weight: 600;
-    font-size: 1.1em;
+    font-size: 1.15em;
     color: #333;
     white-space: nowrap;
-    min-width: 60px;
+    min-width: 65px;
     text-align: right;
   }
 
@@ -321,9 +337,11 @@ async function cargarCarta(clienteId) {
           <div class="plato-info">
             <span class="dish">${plato.plato}</span>
             ${plato.descripcion ? `<div class="descripcion">${plato.descripcion}</div>` : ''}
-            ${alergenosHTML}
           </div>
-          ${plato.precio ? `<div class="precio">${parseFloat(plato.precio).toFixed(2)}€</div>` : ''}
+          <div class="plato-derecha">
+            ${alergenosHTML}
+            ${plato.precio ? `<div class="precio">${parseFloat(plato.precio).toFixed(2)}€</div>` : ''}
+          </div>
         `
         
         ul.appendChild(li)
