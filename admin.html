@@ -49,6 +49,16 @@
   .form-box button.cancel { background-color: #95a5a6; margin-left: 10px; }
   .form-box button.cancel:hover { background-color: #7f8c8d; }
 
+  /* Alérgenos */
+  .alergenos-section { margin: 15px 0; }
+  .alergenos-section label { display: block; font-weight: 600; margin-bottom: 10px; color: #333; }
+  .alergenos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; padding: 15px; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 300px; overflow-y: auto; }
+  .alergeno-item { display: flex; flex-direction: column; align-items: center; padding: 10px; border: 2px solid #eee; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: white; }
+  .alergeno-item:hover { border-color: #3498db; background: #f8f9fa; }
+  .alergeno-item.selected { border-color: #27ae60; background: #e8f5e9; }
+  .alergeno-item img { width: 40px; height: 40px; margin-bottom: 5px; }
+  .alergeno-item span { font-size: 11px; text-align: center; color: #666; }
+
   /* Platos */
   .platos-por-categoria { margin-bottom: 40px; }
   .platos-por-categoria h3 { border-bottom: 2px solid #333; padding-bottom: 8px; margin-bottom: 15px; }
@@ -60,6 +70,8 @@
   .plato-info { flex: 1; }
   .plato-nombre { font-weight: 600; color: #1a1a1a; }
   .plato-descripcion { font-size: 14px; color: #666; margin-top: 4px; }
+  .plato-alergenos { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+  .plato-alergenos img { width: 20px; height: 20px; }
   .plato-precio { font-weight: 600; color: #27ae60; white-space: nowrap; margin-right: 15px; }
   .plato-actions { display: flex; gap: 8px; }
   .plato-actions button { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
@@ -111,6 +123,12 @@
         <input id="platoDescripcion" placeholder="Descripción">
         <input id="platoPrecio" type="number" step="0.01" placeholder="Precio (€)">
         <select id="platoCategoria"></select>
+        
+        <div class="alergenos-section">
+          <label>🔴 Alérgenos (haz clic para seleccionar):</label>
+          <div class="alergenos-grid" id="alergenosGrid"></div>
+        </div>
+
         <button id="guardarPlatoBtn">Guardar</button>
         <button class="cancel" id="cancelPlatoBtn" style="display:none;">Cancelar</button>
       </div>
@@ -130,6 +148,15 @@ const supabaseKey = 'sb_publishable_UtBfupVv8e2zniYdv1jvEA_SXIyWE0Z'
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 let user = null
+
+// Lista de alérgenos disponibles
+const ALERGENOS = [
+  'gluten', 'crustaceos', 'huevos', 'pescado', 'cacahuetes', 
+  'soja', 'lacteos', 'frutos_secos', 'apio', 'mostaza', 
+  'sesamo', 'sulfitos', 'altramuces', 'moluscos'
+]
+
+let alergenosSeleccionados = []
 
 // LOGIN
 document.getElementById('loginBtn').onclick = async () => {
@@ -161,6 +188,41 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.getElementById('tab-' + tab.dataset.tab).classList.add('active')
   }
 })
+
+// ========== ALÉRGENOS ==========
+
+function cargarAlergenosGrid() {
+  const grid = document.getElementById('alergenosGrid')
+  grid.innerHTML = ''
+  
+  ALERGENOS.forEach(alergeno => {
+    const div = document.createElement('div')
+    div.className = 'alergeno-item'
+    div.dataset.alergeno = alergeno
+    
+    if (alergenosSeleccionados.includes(alergeno)) {
+      div.classList.add('selected')
+    }
+    
+    div.innerHTML = `
+      <img src="alergenos/${alergeno}.svg" alt="${alergeno}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22><rect width=%2240%22 height=%2240%22 fill=%22%23ddd%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2214%22>?</text></svg>'">
+      <span>${alergeno.replace('_', ' ')}</span>
+    `
+    
+    div.onclick = () => {
+      const idx = alergenosSeleccionados.indexOf(alergeno)
+      if (idx > -1) {
+        alergenosSeleccionados.splice(idx, 1)
+        div.classList.remove('selected')
+      } else {
+        alergenosSeleccionados.push(alergeno)
+        div.classList.add('selected')
+      }
+    }
+    
+    grid.appendChild(div)
+  })
+}
 
 // ========== CATEGORÍAS ==========
 
@@ -195,7 +257,6 @@ async function cargarCategorias() {
     container.appendChild(div)
   })
 
-  // Eventos
   container.querySelectorAll('.btn-editar').forEach(btn => {
     btn.onclick = () => editarCategoria(btn.dataset.id, categorias)
   })
@@ -206,10 +267,7 @@ async function cargarCategorias() {
     btn.onclick = () => eliminarCategoria(btn.dataset.id)
   })
 
-  // Drag and drop para reordenar categorías
   makeSortableCategorias(container)
-
-  // Actualizar select de categorías en platos
   actualizarSelectCategorias(categorias)
 }
 
@@ -362,11 +420,22 @@ async function cargarPlatos() {
         platoDiv.className = 'plato-item' + (plato.activo ? '' : ' inactivo')
         platoDiv.dataset.id = plato.id
         platoDiv.dataset.categoriaId = plato.categoria_id
+        
+        let alergenosHTML = ''
+        if (plato.alergenos && plato.alergenos.length > 0) {
+          alergenosHTML = '<div class="plato-alergenos">'
+          plato.alergenos.forEach(alergeno => {
+            alergenosHTML += `<img src="alergenos/${alergeno}.svg" alt="${alergeno}" title="${alergeno}">`
+          })
+          alergenosHTML += '</div>'
+        }
+        
         platoDiv.innerHTML = `
           <span class="drag-handle">☰</span>
           <div class="plato-info">
             <div class="plato-nombre">${plato.plato} ${plato.activo ? '' : '(Desactivado)'}</div>
             ${plato.descripcion ? `<div class="plato-descripcion">${plato.descripcion}</div>` : ''}
+            ${alergenosHTML}
           </div>
           ${plato.precio ? `<div class="plato-precio">${plato.precio}€</div>` : ''}
           <div class="plato-actions">
@@ -383,7 +452,6 @@ async function cargarPlatos() {
     container.appendChild(catDiv)
   })
 
-  // Eventos de botones
   container.querySelectorAll('.btn-editar').forEach(btn => {
     btn.onclick = () => editarPlato(btn.dataset.id, platos)
   })
@@ -394,7 +462,6 @@ async function cargarPlatos() {
     btn.onclick = () => eliminarPlato(btn.dataset.id)
   })
 
-  // Hacer los platos arrastrables
   makeSortablePlatos()
 }
 
@@ -418,7 +485,6 @@ function makeSortablePlatos() {
     item.ondragover = (e) => {
       e.preventDefault()
       if (draggedElement && draggedElement !== item) {
-        // Solo permitir drop si están en la misma categoría
         if (draggedElement.dataset.categoriaId === item.dataset.categoriaId) {
           item.classList.add('drag-over')
         }
@@ -434,7 +500,6 @@ function makeSortablePlatos() {
       item.classList.remove('drag-over')
       
       if (draggedElement && draggedElement !== item) {
-        // Solo reordenar si están en la misma categoría
         if (draggedElement.dataset.categoriaId === item.dataset.categoriaId) {
           const container = item.parentElement
           const allItems = [...container.querySelectorAll('.plato-item')]
@@ -469,6 +534,10 @@ function editarPlato(id, platos) {
   document.getElementById('platoDescripcion').value = plato.descripcion || ''
   document.getElementById('platoPrecio').value = plato.precio || ''
   document.getElementById('platoCategoria').value = plato.categoria_id || ''
+  
+  alergenosSeleccionados = plato.alergenos || []
+  cargarAlergenosGrid()
+  
   document.getElementById('plato-form-title').textContent = '✏️ Editar Plato'
   document.getElementById('cancelPlatoBtn').style.display = 'inline-block'
   
@@ -503,7 +572,8 @@ document.getElementById('guardarPlatoBtn').onclick = async () => {
       plato: nombre,
       descripcion,
       precio: precio || null,
-      categoria_id: categoriaId
+      categoria_id: categoriaId,
+      alergenos: alergenosSeleccionados
     }).eq('id', editId)
   } else {
     const { data: maxOrden } = await supabase
@@ -523,7 +593,8 @@ document.getElementById('guardarPlatoBtn').onclick = async () => {
       categoria_id: categoriaId,
       user_id: user.id,
       orden: nuevoOrden,
-      activo: true
+      activo: true,
+      alergenos: alergenosSeleccionados
     })
   }
 
@@ -541,6 +612,8 @@ function limpiarFormPlato() {
   document.getElementById('platoCategoria').value = ''
   document.getElementById('plato-form-title').textContent = '➕ Nuevo Plato'
   document.getElementById('cancelPlatoBtn').style.display = 'none'
+  alergenosSeleccionados = []
+  cargarAlergenosGrid()
 }
 
 function actualizarSelectCategorias(categorias) {
@@ -552,6 +625,7 @@ function actualizarSelectCategorias(categorias) {
 }
 
 async function cargarTodo() {
+  cargarAlergenosGrid()
   await cargarCategorias()
   await cargarPlatos()
 }

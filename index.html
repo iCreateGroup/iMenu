@@ -168,6 +168,25 @@
     font-size: 0.95em;
     color: #666;
     line-height: 1.4;
+    margin-bottom: 6px;
+  }
+
+  .alergenos {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .alergenos img {
+    width: 24px;
+    height: 24px;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+  }
+
+  .alergenos img:hover {
+    opacity: 1;
   }
 
   .precio {
@@ -289,10 +308,20 @@ async function cargarCarta(clienteId) {
       platosCat.forEach(plato => {
         const li = document.createElement('li')
         
+        let alergenosHTML = ''
+        if (plato.alergenos && plato.alergenos.length > 0) {
+          alergenosHTML = '<div class="alergenos">'
+          plato.alergenos.forEach(alergeno => {
+            alergenosHTML += `<img src="alergenos/${alergeno}.svg" alt="${alergeno}" title="${alergeno.replace('_', ' ')}">`
+          })
+          alergenosHTML += '</div>'
+        }
+        
         li.innerHTML = `
           <div class="plato-info">
             <span class="dish">${plato.plato}</span>
             ${plato.descripcion ? `<div class="descripcion">${plato.descripcion}</div>` : ''}
+            ${alergenosHTML}
           </div>
           ${plato.precio ? `<div class="precio">${parseFloat(plato.precio).toFixed(2)}€</div>` : ''}
         `
