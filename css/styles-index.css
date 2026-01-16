@@ -75,6 +75,12 @@ header p {
   letter-spacing: 1px; 
 }
 
+header p svg {
+  width: 40px !important;
+  height: 40px !important;
+  vertical-align: middle;
+}
+
 header::after { 
   content: '◆'; 
   display: block; 
@@ -262,6 +268,11 @@ footer {
     letter-spacing: 2px;
   }
 
+  header p svg {
+    width: 35px !important;
+    height: 35px !important;
+  }
+
   .content {
     padding: 20px 15px;
   }
@@ -312,6 +323,11 @@ footer {
 
   header p {
     font-size: 0.9em;
+  }
+
+  header p svg {
+    width: 30px !important;
+    height: 30px !important;
   }
 
   .collapsible {
