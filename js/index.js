@@ -105,7 +105,7 @@ async function cargarCarta(clienteId) {
         document.querySelectorAll(".collapsible").forEach(otherBtn => {
           if (otherBtn !== btn) {
             otherBtn.classList.remove("active")
-            otherBtn.nextElementSibling.style.display = "none"
+            otherBtn.nextElementSibling.classList.remove("show");
           }
         })
         
