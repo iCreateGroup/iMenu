@@ -56,6 +56,7 @@ header {
   text-align: center; 
   margin-bottom: 50px; 
   position: relative; 
+  z-index: 2;
 }
 
 header::before { 
@@ -97,7 +98,7 @@ header::after {
 
 main { 
   position: relative; 
-  z-index: 1;
+  z-index: 2;
   min-height: 200px;
 }
 
@@ -120,6 +121,8 @@ main {
   text-transform: uppercase; 
   font-family: 'Georgia', serif; 
   transition: all 0.3s ease; 
+  position: relative;
+  z-index: 2;
 }
 
 .collapsible:hover { 
@@ -133,9 +136,18 @@ main {
 }
 
 .content { 
-  display: none; 
+  max-height: 0;
+  overflow: hidden;
   background: white; 
-  padding: 25px 30px; 
+  padding: 0 30px;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.content.show {
+  max-height: 2000px;
+  padding: 25px 30px;
 }
 
 .content ul { 
@@ -227,7 +239,7 @@ footer {
   color: #999; 
   letter-spacing: 1px; 
   position: relative; 
-  z-index: 1; 
+  z-index: 2; 
 }
 
 footer p {
@@ -294,6 +306,10 @@ footer svg {
   }
 
   .content {
+    padding: 0 15px;
+  }
+
+  .content.show {
     padding: 20px 15px;
   }
 
