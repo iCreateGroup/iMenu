@@ -1,10 +1,4 @@
-/* ==== Estilos de la carta digital ==== */
-
-* { 
-  margin: 0; 
-  padding: 0; 
-  box-sizing: border-box; 
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body { 
   font-family: 'Georgia', serif; 
@@ -135,13 +129,82 @@ main {
   list-style: none; 
 }
 
+.content li {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+  gap: 15px;
+}
 
+.content li:last-child {
+  border-bottom: none;
+}
+
+.plato-info {
+  flex: 1;
+  min-width: 0;
+}
 
 .dish { 
   font-weight: 600; 
   color: #1a1a1a; 
   font-size: 1.05em; 
-  letter-spacing: 0.5px; 
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.descripcion {
+  font-weight: 400;
+  font-size: 0.95em;
+  color: #666;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.plato-derecha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.alergenos {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.alergenos img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  opacity: 0.9;
+  transition: all 0.2s;
+  background: #f9f9f9;
+  border-radius: 50%;
+  padding: 4px;
+  border: 1px solid #eee;
+}
+
+.alergenos img:hover {
+  opacity: 1;
+  transform: scale(1.15);
+  border-color: #ddd;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.precio {
+  font-weight: 600;
+  font-size: 1.15em;
+  color: #333;
+  white-space: nowrap;
+  min-width: 65px;
+  text-align: right;
 }
 
 footer { 
@@ -154,39 +217,111 @@ footer {
   z-index: 1; 
 }
 
-/* ==== Estilos para mostrar plato, descripcion y precio ==== */
-
-.content li {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
+.empty-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  font-style: italic;
 }
 
-.content li .left {
-  display: flex;
-  flex-direction: column;
-  max-width: 70%; /* para que no choque con el precio */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
 }
 
-.content li .dish {
-  font-weight: 600;
-  color: #1a1a1a;
-  font-size: 1.05em;
-  letter-spacing: 0.5px;
+/* ============================================
+   RESPONSIVE MÓVIL
+   ============================================ */
+
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  .container {
+    padding: 40px 25px;
+  }
+
+  .container::before {
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+  }
+
+  .container::after {
+    top: 25px;
+    left: 25px;
+    right: 25px;
+    bottom: 25px;
+  }
+
+  header h1 {
+    font-size: 2em;
+    letter-spacing: 2px;
+  }
+
+  .content {
+    padding: 20px 15px;
+  }
+
+  .content li {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .plato-derecha {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .alergenos {
+    justify-content: flex-start;
+    flex: 1;
+  }
+
+  .alergenos img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .precio {
+    min-width: auto;
+    font-size: 1.1em;
+  }
+
+  .dish {
+    font-size: 1em;
+  }
+
+  .descripcion {
+    font-size: 0.9em;
+  }
 }
 
-.content li .descripcion {
-  font-weight: 400;
-  font-size: 0.95em;
-  color: #555;
-  margin-top: 2px;
-}
+@media (max-width: 480px) {
+  .container {
+    padding: 30px 20px;
+  }
 
-.content li .precio {
-  font-weight: 600;
-  font-size: 1em;
-  color: #333;
-  white-space: nowrap;
-  margin-left: 10px;
+  header h1 {
+    font-size: 1.8em;
+  }
+
+  header p {
+    font-size: 0.9em;
+  }
+
+  .collapsible {
+    font-size: 1em;
+    letter-spacing: 2px;
+    padding: 12px 15px;
+  }
+
+  .alergenos img {
+    width: 26px;
+    height: 26px;
+  }
 }
