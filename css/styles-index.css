@@ -27,7 +27,8 @@ body::before {
   padding: 60px 50px; 
   box-shadow: 0 10px 40px rgba(0,0,0,0.1); 
   position: relative; 
-  margin: 20px auto; 
+  margin: 20px auto;
+  overflow: visible;
 }
 
 .container::before { 
@@ -35,7 +36,8 @@ body::before {
   position: absolute; 
   top: 30px; left: 30px; right: 30px; bottom: 30px; 
   border: 2px solid #333; 
-  pointer-events: none; 
+  pointer-events: none;
+  min-height: calc(100% - 60px);
 }
 
 .container::after { 
@@ -43,7 +45,8 @@ body::before {
   position: absolute; 
   top: 35px; left: 35px; right: 35px; bottom: 35px; 
   border: 1px solid #666; 
-  pointer-events: none; 
+  pointer-events: none;
+  min-height: calc(100% - 70px);
 }
 
 header { 
@@ -91,7 +94,8 @@ header::after {
 
 main { 
   position: relative; 
-  z-index: 1; 
+  z-index: 1;
+  min-height: 200px;
 }
 
 .menu-section { 
