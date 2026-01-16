@@ -24,29 +24,32 @@ body::before {
   max-width: 800px; 
   width: 100%; 
   background: white; 
-  padding: 60px 50px; 
+  padding: 60px 50px 60px 50px; 
   box-shadow: 0 10px 40px rgba(0,0,0,0.1); 
   position: relative; 
   margin: 20px auto;
-  overflow: visible;
 }
 
 .container::before { 
   content: ''; 
   position: absolute; 
-  top: 30px; left: 30px; right: 30px; bottom: 30px; 
+  top: 30px; 
+  left: 30px; 
+  right: 30px; 
+  height: calc(100% - 60px);
   border: 2px solid #333; 
   pointer-events: none;
-  min-height: calc(100% - 60px);
 }
 
 .container::after { 
   content: ''; 
   position: absolute; 
-  top: 35px; left: 35px; right: 35px; bottom: 35px; 
+  top: 35px; 
+  left: 35px; 
+  right: 35px; 
+  height: calc(100% - 70px);
   border: 1px solid #666; 
   pointer-events: none;
-  min-height: calc(100% - 70px);
 }
 
 header { 
