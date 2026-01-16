@@ -223,6 +223,19 @@ footer {
   z-index: 1; 
 }
 
+footer p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+footer svg {
+  width: 30px !important;
+  height: 30px !important;
+  flex-shrink: 0;
+}
+
 .empty-message {
   text-align: center;
   padding: 40px 20px;
