@@ -7,6 +7,18 @@ body {
   padding: 20px; 
 }
 
+/* =============================
+   Extras (Perfil / imágenes)
+============================= */
+.grid-2{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:700px){.grid-2{grid-template-columns:1fr 1fr}}
+
+.form-box label{display:block;margin:10px 0 6px;font-weight:600}
+.hint{display:block;opacity:.75;margin-top:6px;font-size:12px}
+
+.image-preview{margin-top:10px;border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden}
+.image-preview img{width:100%;height:auto;display:block}
+
 .admin-container { 
   max-width: 1200px; 
   margin: 20px auto; 

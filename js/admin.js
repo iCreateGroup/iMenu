@@ -4,30 +4,106 @@ const supabaseUrl = 'https://qozzxdrjwjskmwmxscqj.supabase.co'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvenp4ZHJqd2pza213bXhzY3FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5ODkyNjgsImV4cCI6MjA4MTU2NTI2OH0.3C_4cTXacx0Gf8eRtBYp2uaNZ61OE4SEEOUTDSW4P98'
 const supabase = createClient(supabaseUrl, supabaseKey)
 
+// Bucket recomendado para imágenes (Supabase Storage)
+// Crea un bucket llamado "imenu" (publico o con policies) para que el upload funcione.
+const STORAGE_BUCKET = 'imenu'
+
 let user = null
 
 const ALERGENOS = [
-  'gluten', 'crustaceos', 'huevos', 'pescado', 'cacahuetes', 
-  'soja', 'lacteos', 'frutos_secos', 'apio', 'mostaza', 
-  'sesamo', 'sulfitos', 'altramuces', 'moluscos'
+  'gluten','crustaceos','huevos','pescado','cacahuetes',
+  'soja','lacteos','frutos_secos','apio','mostaza',
+  'sesamo','sulfitos','altramuces','moluscos'
 ]
 
 let alergenosSeleccionados = []
 
-// ========== LOGIN ==========
+// ========== DOM (LOGIN) ==========
+const loginForm = document.getElementById('login-form')
+const adminPanel = document.getElementById('admin-panel')
+const loginError = document.getElementById('loginError')
 
+// PERFIL
+const perfilNombre = document.getElementById('perfilNombre')
+const perfilSlug = document.getElementById('perfilSlug')
+const perfilTelefono = document.getElementById('perfilTelefono')
+const perfilDireccion = document.getElementById('perfilDireccion')
+const perfilWifi = document.getElementById('perfilWifi')
+const perfilReviews = document.getElementById('perfilReviews')
+const perfilRating = document.getElementById('perfilRating')
+const perfilRatingCount = document.getElementById('perfilRatingCount')
+const perfilPortadaUrl = document.getElementById('perfilPortadaUrl')
+const perfilPortadaFile = document.getElementById('perfilPortadaFile')
+const perfilPortadaPreview = document.getElementById('perfilPortadaPreview')
+
+// CATEGORIAS
+const editCategoriaId = document.getElementById('editCategoriaId')
+const categoriaNombre = document.getElementById('categoriaNombre')
+const guardarCategoriaBtn = document.getElementById('guardarCategoriaBtn')
+const cancelCategoriaBtn = document.getElementById('cancelCategoriaBtn')
+const categoriaFormTitle = document.getElementById('categoria-form-title')
+
+// PLATOS
+const editPlatoId = document.getElementById('editPlatoId')
+const platoNombre = document.getElementById('platoNombre')
+const platoDescripcion = document.getElementById('platoDescripcion')
+const platoPrecio = document.getElementById('platoPrecio')
+const platoSubcategoria = document.getElementById('platoSubcategoria')
+const platoCategoria = document.getElementById('platoCategoria')
+const platoImagenUrl = document.getElementById('platoImagenUrl')
+const platoImagenFile = document.getElementById('platoImagenFile')
+const platoImagenPreview = document.getElementById('platoImagenPreview')
+const guardarPlatoBtn = document.getElementById('guardarPlatoBtn')
+const cancelPlatoBtn = document.getElementById('cancelPlatoBtn')
+const platoFormTitle = document.getElementById('plato-form-title')
+
+// ========== HELPERS ==========
+function safeText(v){ return (v ?? '').toString() }
+
+function showPreview(el, url){
+  if (!url){ el.style.display = 'none'; el.innerHTML = ''; return }
+  el.style.display = ''
+  el.innerHTML = `<img src="${url}" alt="preview" style="max-width:100%;border-radius:12px;display:block"/>`
+}
+
+function slugify(input){
+  return safeText(input)
+    .normalize('NFD').replace(/\p{Diacritic}/gu,'')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/(^-|-$)/g,'')
+}
+
+async function uploadToStorage(file, folder){
+  if (!file) return null
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+  const path = `${folder}/${crypto.randomUUID()}.${ext}`
+
+  const { error: upErr } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(path, file, { upsert: true, contentType: file.type })
+
+  if (upErr){
+    throw new Error(`No se pudo subir la imagen a Storage: ${upErr.message}`)
+  }
+
+  const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path)
+  return data?.publicUrl || null
+}
+
+// ========== LOGIN ==========
 document.getElementById('loginBtn').onclick = async () => {
   const email = document.getElementById('email').value
   const password = document.getElementById('password').value
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) { 
-    document.getElementById('loginError').textContent = error.message
+  if (error){
+    loginError.textContent = error.message
     return
   }
   user = data.user
-  document.getElementById('login-form').style.display = 'none'
-  document.getElementById('admin-panel').style.display = 'block'
-  cargarTodo()
+  loginForm.style.display = 'none'
+  adminPanel.style.display = 'block'
+  await cargarTodo()
 }
 
 document.getElementById('logoutBtn').onclick = async () => {
@@ -36,7 +112,6 @@ document.getElementById('logoutBtn').onclick = async () => {
 }
 
 // ========== TABS ==========
-
 document.querySelectorAll('.tab').forEach(tab => {
   tab.onclick = () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
@@ -46,44 +121,115 @@ document.querySelectorAll('.tab').forEach(tab => {
   }
 })
 
-// ========== ALÉRGENOS ==========
+// ========== PERFIL ==========
+async function cargarPerfil(){
+  const { data, error } = await supabase
+    .from('Perfil')
+    .select('*')
+    .eq('user_id', user.id)
+    .maybeSingle()
 
-function cargarAlergenosGrid() {
+  if (error){
+    console.warn('Perfil:', error.message)
+    return
+  }
+
+  if (data){
+    perfilNombre.value = safeText(data.nombre)
+    perfilSlug.value = safeText(data.slug)
+    perfilTelefono.value = safeText(data.telefono)
+    perfilDireccion.value = safeText(data.direccion)
+    perfilWifi.value = safeText(data.wifi)
+    perfilReviews.value = safeText(data.reviews_url)
+    perfilRating.value = data.rating ?? ''
+    perfilRatingCount.value = data.rating_count ?? ''
+    perfilPortadaUrl.value = safeText(data.portada_url)
+    showPreview(perfilPortadaPreview, data.portada_url)
+  }
+}
+
+// Autogenerar slug cuando escriben nombre (si slug vacio)
+perfilNombre?.addEventListener('input', () => {
+  if (!perfilSlug.value.trim()) perfilSlug.value = slugify(perfilNombre.value)
+})
+
+perfilPortadaUrl?.addEventListener('input', () => {
+  showPreview(perfilPortadaPreview, perfilPortadaUrl.value.trim())
+})
+
+perfilPortadaFile?.addEventListener('change', () => {
+  const f = perfilPortadaFile.files?.[0]
+  if (!f) return
+  const blob = URL.createObjectURL(f)
+  showPreview(perfilPortadaPreview, blob)
+})
+
+document.getElementById('guardarPerfilBtn').onclick = async () => {
+  try{
+    let portadaFinal = perfilPortadaUrl.value.trim()
+    const f = perfilPortadaFile.files?.[0]
+    if (f){
+      portadaFinal = await uploadToStorage(f, `${user.id}/portadas`)
+      perfilPortadaUrl.value = portadaFinal
+      perfilPortadaFile.value = ''
+      showPreview(perfilPortadaPreview, portadaFinal)
+    }
+
+    const payload = {
+      user_id: user.id,
+      nombre: perfilNombre.value.trim() || null,
+      slug: perfilSlug.value.trim() || null,
+      telefono: perfilTelefono.value.trim() || null,
+      direccion: perfilDireccion.value.trim() || null,
+      wifi: perfilWifi.value.trim() || null,
+      reviews_url: perfilReviews.value.trim() || null,
+      rating: perfilRating.value !== '' ? Number(perfilRating.value) : null,
+      rating_count: perfilRatingCount.value !== '' ? Number(perfilRatingCount.value) : null,
+      portada_url: portadaFinal || null
+    }
+
+    const { error } = await supabase.from('Perfil').upsert(payload)
+    if (error) throw error
+
+    alert('Perfil guardado ✅')
+  }catch(e){
+    alert(e.message)
+  }
+}
+
+// ========== ALERGENOS ==========
+function cargarAlergenosGrid(){
   const grid = document.getElementById('alergenosGrid')
   grid.innerHTML = ''
-  
-  ALERGENOS.forEach(alergeno => {
+
+  ALERGENOS.forEach(a => {
     const div = document.createElement('div')
     div.className = 'alergeno-item'
-    div.dataset.alergeno = alergeno
-    
-    if (alergenosSeleccionados.includes(alergeno)) {
-      div.classList.add('selected')
-    }
-    
+    div.dataset.alergeno = a
+    if (alergenosSeleccionados.includes(a)) div.classList.add('selected')
+
     div.innerHTML = `
-      <img src="alergenos/${alergeno}.svg" alt="${alergeno}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22><rect width=%2240%22 height=%2240%22 fill=%22%23ddd%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2214%22>?</text></svg>'">
-      <span>${alergeno.replace('_', ' ')}</span>
+      <img src="alergenos/${a}.svg" alt="${a}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22><rect width=%2240%22 height=%2240%22 fill=%22%23ddd%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2214%22>?</text></svg>'">
+      <span>${a.replace(/_/g,' ')}</span>
     `
-    
+
     div.onclick = () => {
-      const idx = alergenosSeleccionados.indexOf(alergeno)
-      if (idx > -1) {
-        alergenosSeleccionados.splice(idx, 1)
+      const idx = alergenosSeleccionados.indexOf(a)
+      if (idx > -1){
+        alergenosSeleccionados.splice(idx,1)
         div.classList.remove('selected')
       } else {
-        alergenosSeleccionados.push(alergeno)
+        alergenosSeleccionados.push(a)
         div.classList.add('selected')
       }
     }
-    
+
     grid.appendChild(div)
   })
 }
 
-// ========== CATEGORÍAS ==========
-
-async function cargarCategorias() {
+// ========== CATEGORIAS ==========
+async function cargarCategorias(){
   const { data: categorias } = await supabase
     .from('Categorias')
     .select('*')
@@ -93,8 +239,9 @@ async function cargarCategorias() {
   const container = document.getElementById('categoriasContainer')
   container.innerHTML = ''
 
-  if (!categorias || categorias.length === 0) {
+  if (!categorias || categorias.length === 0){
     container.innerHTML = '<div class="empty-state">No hay categorías. ¡Crea la primera!</div>'
+    actualizarSelectCategorias([])
     return
   }
 
@@ -114,525 +261,413 @@ async function cargarCategorias() {
     container.appendChild(div)
   })
 
-  container.querySelectorAll('.btn-editar').forEach(btn => {
-    btn.onclick = () => editarCategoria(btn.dataset.id, categorias)
-  })
-  container.querySelectorAll('.btn-toggle').forEach(btn => {
-    btn.onclick = () => toggleCategoria(btn.dataset.id, categorias)
-  })
-  container.querySelectorAll('.btn-eliminar').forEach(btn => {
-    btn.onclick = () => eliminarCategoria(btn.dataset.id)
-  })
+  container.querySelectorAll('.btn-editar').forEach(btn => btn.onclick = () => editarCategoria(btn.dataset.id, categorias))
+  container.querySelectorAll('.btn-toggle').forEach(btn => btn.onclick = () => toggleCategoria(btn.dataset.id, categorias))
+  container.querySelectorAll('.btn-eliminar').forEach(btn => btn.onclick = () => eliminarCategoria(btn.dataset.id))
 
   makeSortableCategorias(container)
   actualizarSelectCategorias(categorias)
 }
 
-function makeSortableCategorias(container) {
+function actualizarSelectCategorias(categorias){
+  platoCategoria.innerHTML = ''
+  if (!categorias || !categorias.length){
+    const opt = document.createElement('option')
+    opt.value = ''
+    opt.textContent = 'Crea una categoría primero'
+    platoCategoria.appendChild(opt)
+    return
+  }
+  categorias.forEach(c => {
+    const opt = document.createElement('option')
+    opt.value = c.id
+    opt.textContent = c.nombre
+    platoCategoria.appendChild(opt)
+  })
+}
+
+async function actualizarOrdenCategorias(container){
+  const items = [...container.querySelectorAll('.categoria-item')]
+  for (let i = 0; i < items.length; i++){
+    const id = items[i].dataset.id
+    await supabase.from('Categorias').update({ orden: i }).eq('id', id)
+  }
+}
+
+function makeSortableCategorias(container){
   let draggedElement = null
-  let touchStartY = 0
-  let placeholder = null
   let isDragging = false
 
   container.querySelectorAll('.categoria-item').forEach(item => {
     const dragHandle = item.querySelector('.drag-handle')
-    
-    // IMPORTANTE: Solo el handle es draggable, el item NO
     item.draggable = false
-    
-    // Eventos para desktop (mouse) - solo en el handle
-    dragHandle.onmousedown = (e) => {
-      dragHandle.draggable = true
-    }
-    
+
+    dragHandle.onmousedown = () => { dragHandle.draggable = true }
     dragHandle.ondragstart = (e) => {
       draggedElement = item
       item.classList.add('dragging')
       isDragging = true
       e.dataTransfer.effectAllowed = 'move'
     }
-    
     dragHandle.ondragend = () => {
       item.classList.remove('dragging')
       draggedElement = null
       isDragging = false
       dragHandle.draggable = false
     }
-    
+
     item.ondragover = (e) => {
-      if (isDragging) {
-        e.preventDefault()
-        e.dataTransfer.dropEffect = 'move'
-      }
+      if (!isDragging) return
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'move'
     }
-    
+
     item.ondrop = async (e) => {
       if (!isDragging) return
       e.preventDefault()
-      if (draggedElement && draggedElement !== item) {
+      if (draggedElement && draggedElement !== item){
         const allItems = [...container.querySelectorAll('.categoria-item')]
         const draggedIndex = allItems.indexOf(draggedElement)
         const targetIndex = allItems.indexOf(item)
-        
-        if (draggedIndex < targetIndex) {
-          item.after(draggedElement)
-        } else {
-          item.before(draggedElement)
-        }
-        
+        if (draggedIndex < targetIndex) item.after(draggedElement)
+        else item.before(draggedElement)
         await actualizarOrdenCategorias(container)
       }
     }
-    
-    // Eventos para móvil (touch) - solo en el handle
+
+    // touch
     dragHandle.ontouchstart = (e) => {
       e.stopPropagation()
       draggedElement = item
-      touchStartY = e.touches[0].clientY
       item.classList.add('dragging')
       isDragging = true
-      
-      placeholder = item.cloneNode(true)
-      placeholder.classList.add('placeholder')
-      placeholder.style.opacity = '0.5'
     }
-    
     dragHandle.ontouchmove = (e) => {
       if (!isDragging) return
       e.preventDefault()
       e.stopPropagation()
-      const touch = e.touches[0]
-      const currentY = touch.clientY
-      
-      const afterElement = getDragAfterElement(container, currentY)
-      if (afterElement == null) {
-        container.appendChild(draggedElement)
-      } else {
-        container.insertBefore(draggedElement, afterElement)
-      }
+      const touchY = e.touches[0].clientY
+      const after = getDragAfterElement(container, touchY)
+      if (after == null) container.appendChild(draggedElement)
+      else container.insertBefore(draggedElement, after)
     }
-    
     dragHandle.ontouchend = async (e) => {
       if (!isDragging) return
       e.stopPropagation()
       item.classList.remove('dragging')
-      if (placeholder && placeholder.parentNode) {
-        placeholder.remove()
-      }
       await actualizarOrdenCategorias(container)
       draggedElement = null
       isDragging = false
     }
-    
-    // Prevenir que otros elementos del item inicien drag
-    item.querySelectorAll('button, input, select').forEach(el => {
-      el.ondragstart = (e) => e.preventDefault()
-    })
   })
 }
 
-function getDragAfterElement(container, y) {
-  const draggableElements = [...container.querySelectorAll('.categoria-item:not(.dragging)')]
-  
-  return draggableElements.reduce((closest, child) => {
+function getDragAfterElement(container, y){
+  const els = [...container.querySelectorAll('.categoria-item:not(.dragging)')]
+  return els.reduce((closest, child) => {
     const box = child.getBoundingClientRect()
     const offset = y - box.top - box.height / 2
-    
-    if (offset < 0 && offset > closest.offset) {
-      return { offset: offset, element: child }
-    } else {
-      return closest
-    }
+    if (offset < 0 && offset > closest.offset) return { offset, element: child }
+    return closest
   }, { offset: Number.NEGATIVE_INFINITY }).element
 }
 
-async function actualizarOrdenCategorias(container) {
-  const items = [...container.querySelectorAll('.categoria-item')]
-  for (let i = 0; i < items.length; i++) {
-    const id = items[i].dataset.id
-    await supabase.from('Categorias').update({ orden: i }).eq('id', id)
-  }
+function editarCategoria(id, categorias){
+  const cat = categorias.find(c => String(c.id) === String(id))
+  editCategoriaId.value = id
+  categoriaNombre.value = cat?.nombre || ''
+  categoriaFormTitle.textContent = '✏️ Editar Categoría'
+  cancelCategoriaBtn.style.display = ''
 }
 
-function editarCategoria(id, categorias) {
-  const cat = categorias.find(c => c.id == id)
-  document.getElementById('editCategoriaId').value = id
-  document.getElementById('categoriaNombre').value = cat.nombre
-  document.getElementById('categoria-form-title').textContent = '✏️ Editar Categoría'
-  document.getElementById('cancelCategoriaBtn').style.display = 'inline-block'
+cancelCategoriaBtn.onclick = () => {
+  editCategoriaId.value = ''
+  categoriaNombre.value = ''
+  categoriaFormTitle.textContent = '➕ Nueva Categoría'
+  cancelCategoriaBtn.style.display = 'none'
 }
 
-async function toggleCategoria(id, categorias) {
-  const cat = categorias.find(c => c.id == id)
-  await supabase.from('Categorias').update({ activa: !cat.activa }).eq('id', id)
-  cargarCategorias()
-}
+guardarCategoriaBtn.onclick = async () => {
+  const nombre = categoriaNombre.value.trim()
+  if (!nombre) return alert('Pon un nombre')
 
-async function eliminarCategoria(id) {
-  if (!confirm('¿Eliminar esta categoría? Los platos asociados quedarán sin categoría.')) return
-  await supabase.from('Categorias').delete().eq('id', id)
-  cargarCategorias()
-  cargarPlatos()
-}
-
-document.getElementById('guardarCategoriaBtn').onclick = async () => {
-  const nombre = document.getElementById('categoriaNombre').value.trim()
-  if (!nombre) return alert('El nombre es obligatorio')
-
-  const editId = document.getElementById('editCategoriaId').value
-
-  if (editId) {
-    await supabase.from('Categorias').update({ nombre }).eq('id', editId)
+  const id = editCategoriaId.value
+  if (id){
+    await supabase.from('Categorias').update({ nombre }).eq('id', id)
   } else {
-    const { data: maxOrden } = await supabase
-      .from('Categorias')
-      .select('orden')
-      .eq('user_id', user.id)
-      .order('orden', { ascending: false })
-      .limit(1)
-    
-    const nuevoOrden = maxOrden && maxOrden.length > 0 ? maxOrden[0].orden + 1 : 0
-
-    await supabase.from('Categorias').insert({
-      nombre,
-      orden: nuevoOrden,
-      user_id: user.id
-    })
+    await supabase.from('Categorias').insert({ nombre, user_id: user.id, activa: true, orden: 0 })
   }
 
-  limpiarFormCategoria()
-  cargarCategorias()
+  cancelCategoriaBtn.onclick()
+  await cargarCategorias()
+  await cargarPlatos()
 }
 
-document.getElementById('cancelCategoriaBtn').onclick = limpiarFormCategoria
+async function toggleCategoria(id, categorias){
+  const cat = categorias.find(c => String(c.id) === String(id))
+  await supabase.from('Categorias').update({ activa: !cat.activa }).eq('id', id)
+  await cargarCategorias()
+}
 
-function limpiarFormCategoria() {
-  document.getElementById('editCategoriaId').value = ''
-  document.getElementById('categoriaNombre').value = ''
-  document.getElementById('categoria-form-title').textContent = '➕ Nueva Categoría'
-  document.getElementById('cancelCategoriaBtn').style.display = 'none'
+async function eliminarCategoria(id){
+  if (!confirm('¿Eliminar categoría? También se quedarán platos sin categoría.')) return
+  await supabase.from('Categorias').delete().eq('id', id)
+  await cargarCategorias()
+  await cargarPlatos()
 }
 
 // ========== PLATOS ==========
+function resetPlatoForm(){
+  editPlatoId.value = ''
+  platoNombre.value = ''
+  platoDescripcion.value = ''
+  platoPrecio.value = ''
+  platoSubcategoria.value = ''
+  platoImagenUrl.value = ''
+  platoImagenFile.value = ''
+  platoFormTitle.textContent = '➕ Nuevo Plato'
+  cancelPlatoBtn.style.display = 'none'
+  alergenosSeleccionados = []
+  cargarAlergenosGrid()
+  showPreview(platoImagenPreview, null)
+}
 
-async function cargarPlatos() {
-  const { data: categorias } = await supabase
-    .from('Categorias')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('orden')
+platoImagenUrl?.addEventListener('input', () => {
+  showPreview(platoImagenPreview, platoImagenUrl.value.trim())
+})
 
+platoImagenFile?.addEventListener('change', () => {
+  const f = platoImagenFile.files?.[0]
+  if (!f) return
+  const blob = URL.createObjectURL(f)
+  showPreview(platoImagenPreview, blob)
+})
+
+cancelPlatoBtn.onclick = resetPlatoForm
+
+async function cargarPlatos(){
   const { data: platos } = await supabase
     .from('Menu')
     .select('*')
     .eq('user_id', user.id)
-    .order('orden')
+    .order('orden', { ascending: true })
 
   const container = document.getElementById('platosContainer')
   container.innerHTML = ''
 
-  if (!categorias || categorias.length === 0) {
-    container.innerHTML = '<div class="empty-state">Primero crea categorías en la pestaña anterior.</div>'
+  if (!platos || !platos.length){
+    container.innerHTML = '<div class="empty-state">No hay platos. ¡Crea el primero!</div>'
     return
   }
 
-  categorias.forEach(cat => {
-    const catDiv = document.createElement('div')
-    catDiv.className = 'platos-por-categoria'
-    
-    const catPlatos = platos.filter(p => p.categoria_id == cat.id)
-    
-    catDiv.innerHTML = `<h3>${cat.nombre}</h3>`
-    
-    const platosContainerCat = document.createElement('div')
-    platosContainerCat.className = 'platos-container-cat'
-    platosContainerCat.dataset.categoriaId = cat.id
-    
-    if (catPlatos.length === 0) {
-      platosContainerCat.innerHTML = '<div class="empty-state">No hay platos en esta categoría</div>'
-    } else {
-      catPlatos.forEach(plato => {
-        const platoDiv = document.createElement('div')
-        platoDiv.className = 'plato-item' + (plato.activo ? '' : ' inactivo')
-        platoDiv.dataset.id = plato.id
-        platoDiv.dataset.categoriaId = plato.categoria_id
-        
-        let alergenosHTML = ''
-        if (plato.alergenos && plato.alergenos.length > 0) {
-          alergenosHTML = '<div class="plato-alergenos">'
-          plato.alergenos.forEach(alergeno => {
-            alergenosHTML += `<img src="alergenos/${alergeno}.svg" alt="${alergeno}" title="${alergeno}">`
-          })
-          alergenosHTML += '</div>'
-        }
-        
-        platoDiv.innerHTML = `
-          <span class="drag-handle">☰</span>
-          <div class="plato-info">
-            <div class="plato-nombre">${plato.plato} ${plato.activo ? '' : '(Desactivado)'}</div>
-            ${plato.descripcion ? `<div class="plato-descripcion">${plato.descripcion}</div>` : ''}
-            ${alergenosHTML}
-          </div>
-          ${plato.precio ? `<div class="plato-precio">${plato.precio}€</div>` : ''}
-          <div class="plato-actions">
-            <button class="btn-editar" data-id="${plato.id}">✏️</button>
-            <button class="btn-toggle" data-id="${plato.id}">${plato.activo ? '👁️' : '✓'}</button>
-            <button class="btn-eliminar" data-id="${plato.id}">🗑️</button>
-          </div>
-        `
-        platosContainerCat.appendChild(platoDiv)
-      })
-    }
-    
-    catDiv.appendChild(platosContainerCat)
-    container.appendChild(catDiv)
+  platos.forEach(p => {
+    const div = document.createElement('div')
+    div.className = 'plato-item' + (p.activo ? '' : ' inactiva')
+    div.dataset.id = p.id
+
+    const img = p.imagen_url ? `<img src="${p.imagen_url}" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:10px;margin-right:10px"/>` : ''
+
+    div.innerHTML = `
+      <span class="drag-handle">☰</span>
+      ${img}
+      <div class="plato-info">
+        <div class="plato-nombre">${p.plato} ${p.activo ? '' : '(Oculto)'}</div>
+        <div class="plato-desc">${p.descripcion ? p.descripcion : ''}</div>
+        <div class="plato-meta">${p.subcategoria ? `<span class="chipmini">${p.subcategoria}</span>` : ''}</div>
+      </div>
+      <div class="plato-precio">${p.precio != null ? Number(p.precio).toFixed(2)+' €' : ''}</div>
+      <div class="plato-actions">
+        <button class="btn-editar" data-id="${p.id}">✏️</button>
+        <button class="btn-toggle" data-id="${p.id}">${p.activo ? '👁️' : '🙈'}</button>
+        <button class="btn-eliminar" data-id="${p.id}">🗑️</button>
+      </div>
+    `
+
+    container.appendChild(div)
   })
 
-  container.querySelectorAll('.btn-editar').forEach(btn => {
-    btn.onclick = () => editarPlato(btn.dataset.id, platos)
-  })
-  container.querySelectorAll('.btn-toggle').forEach(btn => {
-    btn.onclick = () => togglePlato(btn.dataset.id, platos)
-  })
-  container.querySelectorAll('.btn-eliminar').forEach(btn => {
-    btn.onclick = () => eliminarPlato(btn.dataset.id)
-  })
+  container.querySelectorAll('.btn-editar').forEach(btn => btn.onclick = () => editarPlato(btn.dataset.id, platos))
+  container.querySelectorAll('.btn-toggle').forEach(btn => btn.onclick = () => togglePlato(btn.dataset.id, platos))
+  container.querySelectorAll('.btn-eliminar').forEach(btn => btn.onclick = () => eliminarPlato(btn.dataset.id))
 
-  makeSortablePlatos()
+  makeSortablePlatos(container)
 }
 
-function makeSortablePlatos() {
-  let draggedElement = null
-  let isDragging = false
+function editarPlato(id, platos){
+  const p = platos.find(x => String(x.id) === String(id))
+  if (!p) return
 
-  document.querySelectorAll('.plato-item').forEach(item => {
-    const dragHandle = item.querySelector('.drag-handle')
-    
-    // IMPORTANTE: Solo el handle es draggable, el item NO
-    item.draggable = false
-    
-    // Eventos para desktop (mouse) - solo en el handle
-    dragHandle.onmousedown = () => {
-      dragHandle.draggable = true
-    }
-    
-    dragHandle.ondragstart = () => {
-      draggedElement = item
-      item.classList.add('dragging')
-      isDragging = true
-    }
-    
-    dragHandle.ondragend = () => {
-      item.classList.remove('dragging')
-      document.querySelectorAll('.plato-item').forEach(el => el.classList.remove('drag-over'))
-      draggedElement = null
-      isDragging = false
-      dragHandle.draggable = false
-    }
-    
-    item.ondragover = (e) => {
-      if (!isDragging) return
-      e.preventDefault()
-      if (draggedElement && draggedElement !== item) {
-        if (draggedElement.dataset.categoriaId === item.dataset.categoriaId) {
-          item.classList.add('drag-over')
-        }
-      }
-    }
-    
-    item.ondragleave = () => {
-      item.classList.remove('drag-over')
-    }
-    
-    item.ondrop = async (e) => {
-      if (!isDragging) return
-      e.preventDefault()
-      item.classList.remove('drag-over')
-      
-      if (draggedElement && draggedElement !== item) {
-        if (draggedElement.dataset.categoriaId === item.dataset.categoriaId) {
-          const container = item.parentElement
-          const allItems = [...container.querySelectorAll('.plato-item')]
-          const draggedIndex = allItems.indexOf(draggedElement)
-          const targetIndex = allItems.indexOf(item)
-          
-          if (draggedIndex < targetIndex) {
-            item.after(draggedElement)
-          } else {
-            item.before(draggedElement)
-          }
-          
-          await actualizarOrdenPlatos(container)
-        }
-      }
-    }
-    
-    // Eventos para móvil (touch) - solo en el handle
-    dragHandle.ontouchstart = (e) => {
-      e.stopPropagation()
-      draggedElement = item
-      item.classList.add('dragging')
-      isDragging = true
-    }
-    
-    dragHandle.ontouchmove = (e) => {
-      if (!isDragging) return
-      e.preventDefault()
-      e.stopPropagation()
-      const touch = e.touches[0]
-      const currentY = touch.clientY
-      
-      const container = item.parentElement
-      const afterElement = getDragAfterElementPlatos(container, currentY, draggedElement.dataset.categoriaId)
-      
-      if (afterElement == null) {
-        container.appendChild(draggedElement)
-      } else {
-        container.insertBefore(draggedElement, afterElement)
-      }
-    }
-    
-    dragHandle.ontouchend = async (e) => {
-      if (!isDragging) return
-      e.stopPropagation()
-      item.classList.remove('dragging')
-      document.querySelectorAll('.plato-item').forEach(el => el.classList.remove('drag-over'))
-      const container = draggedElement.parentElement
-      await actualizarOrdenPlatos(container)
-      draggedElement = null
-      isDragging = false
-    }
-    
-    // Prevenir que otros elementos del item inicien drag
-    item.querySelectorAll('button, input, select').forEach(el => {
-      el.ondragstart = (e) => e.preventDefault()
-    })
-  })
+  editPlatoId.value = p.id
+  platoNombre.value = p.plato || ''
+  platoDescripcion.value = p.descripcion || ''
+  platoPrecio.value = p.precio ?? ''
+  platoSubcategoria.value = p.subcategoria || ''
+  platoCategoria.value = p.categoria_id ?? ''
+  platoImagenUrl.value = p.imagen_url || ''
+  showPreview(platoImagenPreview, p.imagen_url || null)
+
+  alergenosSeleccionados = Array.isArray(p.alergenos) ? [...p.alergenos] : []
+  cargarAlergenosGrid()
+
+  platoFormTitle.textContent = '✏️ Editar Plato'
+  cancelPlatoBtn.style.display = ''
 }
 
-function getDragAfterElementPlatos(container, y, categoriaId) {
-  const draggableElements = [...container.querySelectorAll('.plato-item:not(.dragging)')]
-    .filter(el => el.dataset.categoriaId === categoriaId)
-  
-  return draggableElements.reduce((closest, child) => {
-    const box = child.getBoundingClientRect()
-    const offset = y - box.top - box.height / 2
-    
-    if (offset < 0 && offset > closest.offset) {
-      return { offset: offset, element: child }
-    } else {
-      return closest
-    }
-  }, { offset: Number.NEGATIVE_INFINITY }).element
+async function togglePlato(id, platos){
+  const p = platos.find(x => String(x.id) === String(id))
+  await supabase.from('Menu').update({ activo: !p.activo }).eq('id', id)
+  await cargarPlatos()
 }
 
-async function actualizarOrdenPlatos(container) {
+async function eliminarPlato(id){
+  if (!confirm('¿Eliminar plato?')) return
+  await supabase.from('Menu').delete().eq('id', id)
+  await cargarPlatos()
+}
+
+async function actualizarOrdenPlatos(container){
   const items = [...container.querySelectorAll('.plato-item')]
-  for (let i = 0; i < items.length; i++) {
+  for (let i = 0; i < items.length; i++){
     const id = items[i].dataset.id
     await supabase.from('Menu').update({ orden: i }).eq('id', id)
   }
 }
 
-function editarPlato(id, platos) {
-  const plato = platos.find(p => p.id == id)
-  document.getElementById('editPlatoId').value = id
-  document.getElementById('platoNombre').value = plato.plato
-  document.getElementById('platoDescripcion').value = plato.descripcion || ''
-  document.getElementById('platoPrecio').value = plato.precio || ''
-  document.getElementById('platoCategoria').value = plato.categoria_id || ''
-  
-  alergenosSeleccionados = plato.alergenos || []
-  cargarAlergenosGrid()
-  
-  document.getElementById('plato-form-title').textContent = '✏️ Editar Plato'
-  document.getElementById('cancelPlatoBtn').style.display = 'inline-block'
-  
-  document.getElementById('tab-platos').scrollIntoView({ behavior: 'smooth' })
-}
+function makeSortablePlatos(container){
+  let draggedElement = null
+  let isDragging = false
 
-async function togglePlato(id, platos) {
-  const plato = platos.find(p => p.id == id)
-  await supabase.from('Menu').update({ activo: !plato.activo }).eq('id', id)
-  cargarPlatos()
-}
+  container.querySelectorAll('.plato-item').forEach(item => {
+    const dragHandle = item.querySelector('.drag-handle')
+    item.draggable = false
 
-async function eliminarPlato(id) {
-  if (!confirm('¿Eliminar este plato?')) return
-  await supabase.from('Menu').delete().eq('id', id)
-  cargarPlatos()
-}
+    dragHandle.onmousedown = () => { dragHandle.draggable = true }
+    dragHandle.ondragstart = (e) => {
+      draggedElement = item
+      item.classList.add('dragging')
+      isDragging = true
+      e.dataTransfer.effectAllowed = 'move'
+    }
+    dragHandle.ondragend = () => {
+      item.classList.remove('dragging')
+      draggedElement = null
+      isDragging = false
+      dragHandle.draggable = false
+    }
 
-document.getElementById('guardarPlatoBtn').onclick = async () => {
-  const nombre = document.getElementById('platoNombre').value.trim()
-  const descripcion = document.getElementById('platoDescripcion').value.trim()
-  const precio = document.getElementById('platoPrecio').value
-  const categoriaId = document.getElementById('platoCategoria').value
+    item.ondragover = (e) => {
+      if (!isDragging) return
+      e.preventDefault()
+    }
 
-  if (!nombre) return alert('El nombre es obligatorio')
-  if (!categoriaId) return alert('Selecciona una categoría')
+    item.ondrop = async (e) => {
+      if (!isDragging) return
+      e.preventDefault()
+      if (draggedElement && draggedElement !== item){
+        const allItems = [...container.querySelectorAll('.plato-item')]
+        const draggedIndex = allItems.indexOf(draggedElement)
+        const targetIndex = allItems.indexOf(item)
+        if (draggedIndex < targetIndex) item.after(draggedElement)
+        else item.before(draggedElement)
+        await actualizarOrdenPlatos(container)
+      }
+    }
 
-  const editId = document.getElementById('editPlatoId').value
-
-  if (editId) {
-    await supabase.from('Menu').update({
-      plato: nombre,
-      descripcion,
-      precio: precio || null,
-      categoria_id: categoriaId,
-      alergenos: alergenosSeleccionados
-    }).eq('id', editId)
-  } else {
-    const { data: maxOrden } = await supabase
-      .from('Menu')
-      .select('orden')
-      .eq('user_id', user.id)
-      .eq('categoria_id', categoriaId)
-      .order('orden', { ascending: false })
-      .limit(1)
-    
-    const nuevoOrden = maxOrden && maxOrden.length > 0 ? maxOrden[0].orden + 1 : 0
-
-    await supabase.from('Menu').insert({
-      plato: nombre,
-      descripcion,
-      precio: precio || null,
-      categoria_id: categoriaId,
-      user_id: user.id,
-      orden: nuevoOrden,
-      activo: true,
-      alergenos: alergenosSeleccionados
-    })
-  }
-
-  limpiarFormPlato()
-  cargarPlatos()
-}
-
-document.getElementById('cancelPlatoBtn').onclick = limpiarFormPlato
-
-function limpiarFormPlato() {
-  document.getElementById('editPlatoId').value = ''
-  document.getElementById('platoNombre').value = ''
-  document.getElementById('platoDescripcion').value = ''
-  document.getElementById('platoPrecio').value = ''
-  document.getElementById('platoCategoria').value = ''
-  document.getElementById('plato-form-title').textContent = '➕ Nuevo Plato'
-  document.getElementById('cancelPlatoBtn').style.display = 'none'
-  alergenosSeleccionados = []
-  cargarAlergenosGrid()
-}
-
-function actualizarSelectCategorias(categorias) {
-  const select = document.getElementById('platoCategoria')
-  select.innerHTML = '<option value="">-- Selecciona categoría --</option>'
-  categorias.filter(c => c.activa).forEach(cat => {
-    select.innerHTML += `<option value="${cat.id}">${cat.nombre}</option>`
+    // touch
+    dragHandle.ontouchstart = (e) => {
+      e.stopPropagation()
+      draggedElement = item
+      item.classList.add('dragging')
+      isDragging = true
+    }
+    dragHandle.ontouchmove = (e) => {
+      if (!isDragging) return
+      e.preventDefault()
+      e.stopPropagation()
+      const touchY = e.touches[0].clientY
+      const after = getDragAfterElementPlatos(container, touchY)
+      if (after == null) container.appendChild(draggedElement)
+      else container.insertBefore(draggedElement, after)
+    }
+    dragHandle.ontouchend = async (e) => {
+      if (!isDragging) return
+      e.stopPropagation()
+      item.classList.remove('dragging')
+      await actualizarOrdenPlatos(container)
+      draggedElement = null
+      isDragging = false
+    }
   })
 }
 
-async function cargarTodo() {
+function getDragAfterElementPlatos(container, y){
+  const els = [...container.querySelectorAll('.plato-item:not(.dragging)')]
+  return els.reduce((closest, child) => {
+    const box = child.getBoundingClientRect()
+    const offset = y - box.top - box.height / 2
+    if (offset < 0 && offset > closest.offset) return { offset, element: child }
+    return closest
+  }, { offset: Number.NEGATIVE_INFINITY }).element
+}
+
+guardarPlatoBtn.onclick = async () => {
+  const nombre = platoNombre.value.trim()
+  if (!nombre) return alert('Pon un nombre')
+
+  const catId = platoCategoria.value ? Number(platoCategoria.value) : null
+  if (!catId) return alert('Selecciona una categoría')
+
+  try{
+    let imgFinal = platoImagenUrl.value.trim()
+    const f = platoImagenFile.files?.[0]
+    if (f){
+      imgFinal = await uploadToStorage(f, `${user.id}/platos`)
+      platoImagenUrl.value = imgFinal
+      platoImagenFile.value = ''
+      showPreview(platoImagenPreview, imgFinal)
+    }
+
+    const payload = {
+      plato: nombre,
+      descripcion: platoDescripcion.value.trim() || null,
+      precio: platoPrecio.value !== '' ? Number(platoPrecio.value) : null,
+      categoria_id: catId,
+      subcategoria: platoSubcategoria.value.trim() || null,
+      imagen_url: imgFinal || null,
+      alergenos: alergenosSeleccionados,
+      user_id: user.id,
+      activo: true
+    }
+
+    const id = editPlatoId.value
+    const { error } = id
+      ? await supabase.from('Menu').update(payload).eq('id', id)
+      : await supabase.from('Menu').insert(payload)
+
+    if (error) throw error
+
+    resetPlatoForm()
+    await cargarPlatos()
+  }catch(e){
+    alert(e.message)
+  }
+}
+
+// ========== INIT ==========
+async function cargarTodo(){
   cargarAlergenosGrid()
+  await cargarPerfil()
   await cargarCategorias()
   await cargarPlatos()
 }
+
+// Si ya hay sesion, auto login
+;(async () => {
+  const { data } = await supabase.auth.getSession()
+  if (data?.session?.user){
+    user = data.session.user
+    loginForm.style.display = 'none'
+    adminPanel.style.display = 'block'
+    await cargarTodo()
+  }
+})()

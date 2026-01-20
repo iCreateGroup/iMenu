@@ -8,7 +8,17 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 const params = new URLSearchParams(window.location.search)
-const clienteId = params.get('cliente')
+// Compatibilidad:
+// - ?cliente=<uuid> (modo antiguo)
+// - ?cliente=<slug> (nuevo: friendly)
+// - ?bar=<slug>
+const clienteParam = params.get('cliente') || params.get('bar')
+
+function isUuid(v) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ''))
+}
+
+let clienteId = null // siempre será UUID al final
 
 // =============================
 // DOM
@@ -448,10 +458,31 @@ function applyProfileToHome() {
 async function loadMenu() {
   dishList.innerHTML = '<div class="loading">Cargando…</div>'
 
-  if (!clienteId) {
+  if (!clienteParam) {
     placeTitle.textContent = 'URL inválida'
-    homeCategories.innerHTML = '<p class="muted">Falta el parámetro <b>?cliente=</b>.</p>'
+    homeCategories.innerHTML = '<p class="muted">Falta el parámetro <b>?cliente=</b> (UUID o slug) o <b>?bar=</b>.</p>'
     return
+  }
+
+  // Resolver UUID final
+  if (isUuid(clienteParam)) {
+    clienteId = clienteParam
+  } else {
+    // Nuevo modo: slug en Perfil.slug
+    const slug = String(clienteParam).trim()
+    const { data: perfilBySlug, error: slugErr } = await supabase
+      .from('Perfil')
+      .select('user_id')
+      .eq('slug', slug)
+      .limit(1)
+      .maybeSingle()
+
+    if (slugErr || !perfilBySlug?.user_id) {
+      placeTitle.textContent = 'No encontrado'
+      homeCategories.innerHTML = '<p class="muted">No existe ninguna carta con ese identificador.</p>'
+      return
+    }
+    clienteId = perfilBySlug.user_id
   }
 
   // Perfil opcional
