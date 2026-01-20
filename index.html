@@ -1,73 +1,122 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Carta Digital</title>
-  <link rel="stylesheet" href="css/styles-index.css" />
-</head>
-<body>
-  <!-- CABECERA / HERO (estilo limpio, móvil-first) -->
-  <header class="hero" id="hero">
-    <div class="hero__inner">
-      <div class="hero__titleWrap">
-        <h1 class="hero__title" id="menuTitle">Carta Digital</h1>
-        <div class="hero__subtitle" id="menuSubtitle">Bon appétit</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Carta</title>
+    <link rel="stylesheet" href="css/styles-index.css" />
+  </head>
+  <body>
+    <div class="app" id="app">
+      <!-- HOME (portada + botones de categorías) -->
+      <section class="screen screen--home" id="viewHome" aria-hidden="false">
+        <header class="homeCard">
+          <div class="cover" id="cover">
+            <img id="coverImg" alt="" />
+            <div class="coverTop">
+              <button class="pill" id="langBtn" type="button" aria-label="Idioma">
+                <span id="langLabel">Español</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>
+              </button>
+              <button class="iconBtn" id="homeSearchBtn" type="button" aria-label="Buscar">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 18a8 8 0 1 1 5.293-14.293A8 8 0 0 1 10 18zm11 3-5.2-5.2"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="homeBody">
+            <h1 class="placeTitle" id="placeTitle">Carta</h1>
+
+            <div class="homeInfo" id="homeInfo">
+              <button class="rowBtn" id="ratingBtn" type="button" aria-label="Valoración" style="display:none;">
+                <div class="rowIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                </div>
+                <div class="rowText">
+                  <div class="rowPrimary" id="ratingPrimary"></div>
+                  <div class="rowSecondary" id="ratingSecondary"></div>
+                </div>
+                <div class="rowChevron" aria-hidden="true">›</div>
+              </button>
+
+              <button class="rowBtn" id="infoBtn" type="button" aria-label="Info" style="display:none;">
+                <div class="rowIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2zm0 7a1.25 1.25 0 1 1 0-2.5A1.25 1.25 0 0 1 12 9zm2 9h-4v-2h1v-4h-1v-2h3v6h1v2z"/></svg>
+                </div>
+                <div class="rowText">
+                  <div class="rowPrimary">Info</div>
+                  <div class="rowSecondary" id="infoSecondary">Wi‑Fi, Teléfono y Dirección</div>
+                </div>
+                <div class="rowChevron" aria-hidden="true">›</div>
+              </button>
+            </div>
+
+            <div class="categoryButtons" id="homeCategories" aria-label="Categorías"></div>
+          </div>
+        </header>
+      </section>
+
+      <!-- CATEGORY VIEW (topbar + chips + lista de platos) -->
+      <section class="screen screen--category" id="viewCategory" aria-hidden="true">
+        <header class="topbar">
+          <button class="iconBtn" id="backBtn" type="button" aria-label="Volver">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
+          </button>
+          <div class="topbarTitle" id="categoryTitle">Categoría</div>
+          <button class="iconBtn" id="catSearchBtn" type="button" aria-label="Buscar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 18a8 8 0 1 1 5.293-14.293A8 8 0 0 1 10 18zm11 3-5.2-5.2"/></svg>
+          </button>
+        </header>
+
+        <div class="chipsBar" aria-label="Subcategorías">
+          <div class="chipsTrack" id="subcatChips"></div>
+        </div>
+
+        <main class="list" id="dishList" aria-live="polite">
+          <div class="loading">Cargando…</div>
+        </main>
+      </section>
+
+      <!-- BUSCADOR (overlay) -->
+      <div class="searchOverlay" id="searchOverlay" aria-hidden="true">
+        <div class="searchBox" role="dialog" aria-modal="true" aria-label="Buscar">
+          <div class="searchField">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 18a8 8 0 1 1 5.293-14.293A8 8 0 0 1 10 18zm11 3-5.2-5.2"/></svg>
+            <input id="searchInput" type="search" placeholder="Buscar" autocomplete="off" />
+            <button class="iconBtn" id="clearSearch" type="button" aria-label="Borrar">✕</button>
+          </div>
+          <button class="ghostBtn" id="closeSearch" type="button">Cerrar</button>
+        </div>
+        <button class="overlayBackdrop" type="button" id="searchBackdrop" aria-label="Cerrar"></button>
       </div>
 
-      <div class="hero__controls" role="search">
-        <div class="search">
-          <span class="search__icon" aria-hidden="true">⌕</span>
-          <input id="searchInput" class="search__input" type="search" placeholder="Buscar en la carta…" autocomplete="off" />
-          <button id="clearSearch" class="search__clear" type="button" aria-label="Borrar búsqueda" title="Borrar">✕</button>
+      <!-- CTA inferior -->
+      <button class="floatingCta" id="ctaBtn" type="button" style="display:none;">
+        <span class="ctaIcon" aria-hidden="true">💬</span>
+        <span>Valora tu experiencia</span>
+      </button>
+    </div>
+
+    <!-- MODAL (bottom sheet) -->
+    <div class="sheet" id="dishSheet" aria-hidden="true">
+      <button class="sheetBackdrop" type="button" data-close="true" aria-label="Cerrar"></button>
+      <div class="sheetCard" role="dialog" aria-modal="true" aria-label="Detalle">
+        <div class="sheetHandle" aria-hidden="true"></div>
+        <div class="sheetImage" id="sheetImageWrap" style="display:none;">
+          <img id="sheetImage" alt="" />
+        </div>
+        <div class="sheetBody">
+          <div class="sheetTitle" id="sheetTitle"></div>
+          <div class="sheetPrice" id="sheetPrice"></div>
+          <div class="sheetDesc" id="sheetDesc"></div>
+          <div class="sheetSection" id="sheetAllergenSection" style="display:none;">
+            <div class="sheetSectionTitle">Alérgenos</div>
+            <div class="sheetAllergens" id="sheetAllergens"></div>
+          </div>
         </div>
       </div>
     </div>
-  </header>
 
-  <div class="shell">
-    <nav class="chips" aria-label="Categorías">
-      <div class="chips__track" id="categoryChips">
-        <div class="chip chip--skeleton"></div>
-        <div class="chip chip--skeleton"></div>
-        <div class="chip chip--skeleton"></div>
-      </div>
-    </nav>
-
-    <main id="mainMenu" class="menu" aria-live="polite">
-      <div class="loading">Cargando carta...</div>
-    </main>
-
-    <footer class="footer">
-      <p>
-        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1024px" height="1024px" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd" viewBox="0 0 1024 1024" aria-hidden="true">
-          <g><path style="opacity:0.994" fill="#fffe00" d="M 444.5,164.5 C 505.167,164.5 565.833,164.5 626.5,164.5C 626.657,165.873 626.49,167.207 626,168.5C 604.406,208.026 582.573,247.36 560.5,286.5C 500.637,287.165 440.804,287.831 381,288.5C 379.635,287.407 379.301,286.074 380,284.5C 399.474,245.551 419.474,206.884 440,168.5C 441.397,166.93 442.897,165.596 444.5,164.5 Z"/></g>
-          <g><path style="opacity:0.995" fill="#fffe00" d="M 890.5,164.5 C 889.699,166.042 889.366,167.708 889.5,169.5C 889.245,172.016 888.411,174.35 887,176.5C 865.667,212.5 844.333,248.5 823,284.5C 821.355,286.662 819.188,287.995 816.5,288.5C 737.361,287.174 658.194,287.174 579,288.5C 576.855,288.604 575.021,287.937 573.5,286.5C 592.587,251.993 611.421,217.326 630,182.5C 633.46,176.41 637.294,170.577 641.5,165C 724.499,164.5 807.499,164.333 890.5,164.5 Z"/></g>
-          <g><path style="opacity:0.993" fill="#fffe00" d="M 367.5,306.5 C 425.501,306.333 483.501,306.5 541.5,307C 542.517,308.049 542.684,309.216 542,310.5C 504.901,380.872 467.735,451.038 430.5,521C 373.916,522.658 317.249,522.992 260.5,522C 258.203,520.737 257.37,518.903 258,516.5C 292.074,446.352 327.741,377.019 365,308.5C 365.995,307.934 366.828,307.267 367.5,306.5 Z"/></g>
-          <g><path style="opacity:0.994" fill="#fffe01" d="M 498.5,435.5 C 568.834,435.333 639.167,435.5 709.5,436C 710.672,436.419 711.672,437.085 712.5,438C 709.667,441.5 706.833,445 704,448.5C 558.708,595.293 413.208,741.959 267.5,888.5C 267.167,888.167 266.833,887.833 266.5,887.5C 295.401,824.702 325.568,762.702 357,701.5C 402.112,614.612 447.779,527.945 494,441.5C 495.332,439.34 496.832,437.34 498.5,435.5 Z"/></g>
-        </svg>
-        <span>© 2026 iCreate</span>
-      </p>
-    </footer>
-  </div>
-
-  <!-- Modal de plato -->
-  <div class="modal" id="dishModal" aria-hidden="true">
-    <div class="modal__backdrop" data-close="true"></div>
-    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <button class="modal__close" type="button" data-close="true" aria-label="Cerrar">✕</button>
-      <div class="modal__body">
-        <h2 class="modal__title" id="modalTitle">Plato</h2>
-        <div class="modal__price" id="modalPrice"></div>
-        <p class="modal__desc" id="modalDesc"></p>
-        <div class="modal__meta">
-          <div class="modal__metaTitle">Alérgenos</div>
-          <div class="modal__allergens" id="modalAllergens"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="js/index.js"></script>
-</body>
+    <script type="module" src="js/index.js"></script>
+  </body>
 </html>
