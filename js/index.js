@@ -113,14 +113,37 @@ function baseUrl(path) {
 }
 
 function normalizeAllergenKey(v) {
-  const k = (v || '').toString().trim().toLowerCase()
+  const raw = (v || '').toString().trim().toLowerCase()
+  if (!raw) return ''
+
   // si viene como 'gluten.svg' o 'alergenos/gluten.svg'
-  const clean = k.replace(/^alergenos\//, '').replace(/\.svg$/, '')
-  // quita acentos y espacios
-  return clean
+  const clean = raw.replace(/^alergenos\//, '').replace(/\.svg$/, '')
+  const n = clean
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
-    .replace(/\s+/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  // Mapeo tolerante: si en BD guardaste textos tipo "cereales con gluten",
+  // los convertimos a las keys que tienes como SVG.
+  const includes = (needle) => n.includes(needle)
+  if (includes('gluten')) return 'gluten'
+  if (includes('huevo')) return 'huevos'
+  if (includes('lact') || includes('leche')) return 'lacteos'
+  if (includes('crust')) return 'crustaceos'
+  if (includes('molusc')) return 'moluscos'
+  if (includes('cacahuet')) return 'cacahuetes'
+  if (includes('sesam')) return 'sesamo'
+  if (includes('mostaz')) return 'mostaza'
+  if (includes('pescad')) return 'pescado'
+  if (includes('soja')) return 'soja'
+  if (includes('apio')) return 'apio'
+  if (includes('altram')) return 'altramuces'
+  if (includes('sulfit')) return 'sulfitos'
+  if (includes('frutos') && (includes('cascara') || includes('carcara') || includes('secos'))) return 'frutos_secos'
+
+  // fallback: convierte espacios a _ para intentar cargar un SVG con ese nombre
+  return n.replace(/\s+/g, '_')
 }
 
 function allergenKeyToUrl(v) {
@@ -203,7 +226,7 @@ function openSheet(plato) {
   sheetPrice.textContent = plato.precio != null ? formatPrice(plato.precio) : ''
   sheetDesc.textContent = safeText(plato.descripcion)
 
-  // alergenos: usamos tus SVG de /alergenos
+  // alergenos: usamos tus SVG de /alergenos (sin texto). Click => ampliar.
   const alergs = Array.isArray(plato.alergenos) ? plato.alergenos : []
   sheetAllergens.innerHTML = ''
   if (alergs.length) {
@@ -216,14 +239,13 @@ function openSheet(plato) {
       img.alt = key.replace(/_/g, ' ')
       img.title = img.alt
       img.src = allergenKeyToUrl(key)
-      // fallback: si falla el svg, mostramos chip de texto
-      img.onerror = () => {
-        img.remove()
-        const chip = document.createElement('span')
-        chip.className = 'allergenChip'
-        chip.textContent = img.alt
-        sheetAllergens.appendChild(chip)
-      }
+      img.loading = 'lazy'
+      img.addEventListener('click', (ev) => {
+        ev.stopPropagation()
+        openAllergenZoom(img.src, img.alt)
+      })
+      // si falla, simplemente lo ocultamos (no mostramos texto)
+      img.onerror = () => img.remove()
       sheetAllergens.appendChild(img)
     })
   } else {
@@ -234,6 +256,36 @@ function openSheet(plato) {
   dishSheet.setAttribute('aria-hidden', 'false')
   document.body.style.overflow = 'hidden'
 }
+
+// =============================
+// Allergen zoom (lightbox)
+// =============================
+const allergenZoom = document.getElementById('allergenZoom')
+const allergenZoomImg = document.getElementById('allergenZoomImg')
+const allergenZoomTitle = document.getElementById('allergenZoomTitle')
+const allergenZoomClose = document.getElementById('allergenZoomClose')
+const allergenZoomBackdrop = document.getElementById('allergenZoomBackdrop')
+
+function openAllergenZoom(src, title) {
+  if (!allergenZoom) return
+  allergenZoomImg.src = src
+  allergenZoomTitle.textContent = title || 'Alérgeno'
+  allergenZoom.classList.add('is-open')
+  allergenZoom.setAttribute('aria-hidden', 'false')
+}
+
+function closeAllergenZoom() {
+  if (!allergenZoom) return
+  allergenZoom.classList.remove('is-open')
+  allergenZoom.setAttribute('aria-hidden', 'true')
+  allergenZoomImg.removeAttribute('src')
+}
+
+allergenZoomClose?.addEventListener('click', closeAllergenZoom)
+allergenZoomBackdrop?.addEventListener('click', closeAllergenZoom)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && allergenZoom?.classList.contains('is-open')) closeAllergenZoom()
+})
 
 function closeSheet() {
   dishSheet.classList.remove('is-open')
@@ -395,9 +447,11 @@ function buildDishRow(plato) {
       s.className = 'miniBadge'
       const img = document.createElement('img')
       img.className = 'allergenIcon miniBadgeImg'
-      img.alt = a.replace(/_/g, ' ')
+      const key = normalizeAllergenKey(a)
+      if (!key) return
+      img.alt = key.replace(/_/g, ' ')
       img.title = img.alt
-      const url = allergenKeyToUrl(a)
+      const url = allergenKeyToUrl(key)
       if (url) img.src = url
       img.onerror = () => { s.textContent = '•' }
       s.appendChild(img)

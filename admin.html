@@ -113,6 +113,13 @@
     <div id="tab-platos" class="tab-content">
       <div class="form-box">
         <h3 id="plato-form-title">➕ Nuevo Plato</h3>
+        <div class="edit-grid">
+          <aside id="platoEditAside" class="edit-aside" style="display:none;">
+            <div class="edit-aside-title">Editando</div>
+            <div id="platoEditAsideBody" class="edit-aside-body"></div>
+          </aside>
+
+          <div class="edit-main">
         <input type="hidden" id="editPlatoId">
         <input id="platoNombre" placeholder="Nombre del plato">
         <input id="platoDescripcion" placeholder="Descripción">
@@ -139,6 +146,8 @@
 
         <button id="guardarPlatoBtn">Guardar</button>
         <button class="cancel" id="cancelPlatoBtn" style="display:none;">Cancelar</button>
+          </div>
+        </div>
       </div>
 
       <div id="platosContainer"></div>

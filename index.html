@@ -162,6 +162,18 @@
       </div>
     </div>
 
+    <!-- ZOOM ALERGENO (overlay) -->
+    <div class="zoomModal" id="allergenZoom" aria-hidden="true">
+      <button class="zoomBackdrop" id="allergenZoomBackdrop" type="button" aria-label="Cerrar"></button>
+      <div class="zoomCard" role="dialog" aria-modal="true" aria-label="Alérgeno">
+        <button class="zoomClose" id="allergenZoomClose" type="button" aria-label="Cerrar">✕</button>
+        <div class="zoomInner">
+          <img id="allergenZoomImg" alt="Alérgeno" />
+          <div class="zoomTitle" id="allergenZoomTitle"></div>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="js/index.js"></script>
   </body>
 </html>

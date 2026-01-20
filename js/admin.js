@@ -56,9 +56,39 @@ const platoImagenPreview = document.getElementById('platoImagenPreview')
 const guardarPlatoBtn = document.getElementById('guardarPlatoBtn')
 const cancelPlatoBtn = document.getElementById('cancelPlatoBtn')
 const platoFormTitle = document.getElementById('plato-form-title')
+const platoEditAside = document.getElementById('platoEditAside')
+const platoEditAsideBody = document.getElementById('platoEditAsideBody')
 
 // ========== HELPERS ==========
 function safeText(v){ return (v ?? '').toString() }
+
+function normalizeAllergenKey(v){
+  const raw = safeText(v).trim().toLowerCase()
+  if (!raw) return ''
+  const clean = raw.replace(/^alergenos\//,'').replace(/\.svg$/,'')
+  const n = clean
+    .normalize('NFD').replace(/\p{Diacritic}/gu,'')
+    .replace(/\s+/g,' ')
+    .trim()
+
+  const includes = (needle) => n.includes(needle)
+  if (includes('gluten')) return 'gluten'
+  if (includes('huevo')) return 'huevos'
+  if (includes('lact') || includes('leche')) return 'lacteos'
+  if (includes('crust')) return 'crustaceos'
+  if (includes('molusc')) return 'moluscos'
+  if (includes('cacahuet')) return 'cacahuetes'
+  if (includes('sesam')) return 'sesamo'
+  if (includes('mostaz')) return 'mostaza'
+  if (includes('pescad')) return 'pescado'
+  if (includes('soja')) return 'soja'
+  if (includes('apio')) return 'apio'
+  if (includes('altram')) return 'altramuces'
+  if (includes('sulfit')) return 'sulfitos'
+  if (includes('frutos') && (includes('cascara') || includes('secos'))) return 'frutos_secos'
+
+  return n.replace(/\s+/g,'_')
+}
 
 function showPreview(el, url){
   if (!url){ el.style.display = 'none'; el.innerHTML = ''; return }
@@ -430,6 +460,12 @@ function resetPlatoForm(){
   alergenosSeleccionados = []
   cargarAlergenosGrid()
   showPreview(platoImagenPreview, null)
+  if (platoEditAside){
+    platoEditAside.style.display = 'none'
+  }
+  if (platoEditAsideBody){
+    platoEditAsideBody.innerHTML = ''
+  }
 }
 
 platoImagenUrl?.addEventListener('input', () => {
@@ -506,8 +542,33 @@ function editarPlato(id, platos){
   platoImagenUrl.value = p.imagen_url || ''
   showPreview(platoImagenPreview, p.imagen_url || null)
 
-  alergenosSeleccionados = Array.isArray(p.alergenos) ? [...p.alergenos] : []
+  // Limpieza: si antes se guardaron textos ("cereales con gluten"...),
+  // los normalizamos a keys válidas para tus SVG y descartamos lo desconocido.
+  const existing = Array.isArray(p.alergenos) ? p.alergenos : []
+  alergenosSeleccionados = existing
+    .map(normalizeAllergenKey)
+    .filter(Boolean)
+    .filter(k => ALERGENOS.includes(k))
   cargarAlergenosGrid()
+
+  // Aside "Editando" (para no perder contexto)
+  if (platoEditAside && platoEditAsideBody){
+    const catName = platoCategoria?.selectedOptions?.[0]?.textContent || ''
+    const thumb = p.imagen_url ? `<img class="edit-aside-thumb" src="${p.imagen_url}" alt="">` : `<div class="edit-aside-thumb"></div>`
+    const tags = []
+    if (catName) tags.push(`<span class="edit-tag">${catName}</span>`)
+    if (p.subcategoria) tags.push(`<span class="edit-tag">${p.subcategoria}</span>`)
+    if (p.precio != null) tags.push(`<span class="edit-tag">${Number(p.precio).toFixed(2)} €</span>`)
+
+    platoEditAsideBody.innerHTML = `
+      ${thumb}
+      <div class="edit-aside-meta">
+        <div class="edit-aside-name">${safeText(p.plato)}</div>
+        <div class="edit-aside-tags">${tags.join('')}</div>
+      </div>
+    `
+    platoEditAside.style.display = ''
+  }
 
   platoFormTitle.textContent = '✏️ Editar Plato'
   cancelPlatoBtn.style.display = ''
