@@ -643,8 +643,7 @@ function applyProfileToHome() {
     cover.style.background = "linear-gradient(135deg, #d7d7dd, #f5f5f7)";
   }
 
-  // Reseñas / Rating (opcional)
-  // Mostramos el "botón de reseñas" si hay rating o si existe google_place_id (para abrir Google Maps).
+  // Reseñas (Google Maps) — mostramos el botón SOLO si hay google_place_id
   const rating = pick(PROFILE, ["rating", "valoracion", "stars"]);
   const ratingCount = pick(PROFILE, [
     "rating_count",
@@ -653,18 +652,24 @@ function applyProfileToHome() {
   ]);
   const googleReviewsUrl = getGoogleReviewsSearchUrl(PROFILE);
 
-  if (rating != null || googleReviewsUrl) {
+  if (googleReviewsUrl) {
     ratingBtn.style.display = "";
 
     // Texto del botón (home): el usuario quiere que ponga "Reseñas"
     ratingPrimary.textContent = "Reseñas";
-    if (ratingCount) {
+
+    // Texto secundario (si lo tienes guardado en Perfil, mejor)
+    if (rating != null && ratingCount) {
+      ratingSecondary.textContent = `${Number(rating).toFixed(1)} ★ · ${ratingCount} reseñas`;
+    } else if (ratingCount) {
       ratingSecondary.textContent = `${ratingCount} reseñas`;
     } else if (rating != null) {
       ratingSecondary.textContent = `${Number(rating).toFixed(1)} ★`;
     } else {
       ratingSecondary.textContent = "Ver en Google";
     }
+  } else {
+    ratingBtn.style.display = "none";
   }
 
   // Info (opcional)
@@ -912,9 +917,8 @@ backBtn.addEventListener("click", goHome);
 
 ratingBtn.addEventListener("click", () => {
   const url = PROFILE ? getGoogleReviewsSearchUrl(PROFILE) : null;
-  if (url) return window.open(url, "_blank", "noopener");
-  // Fallback: si no hay Place ID, abrimos la hoja de rating local
-  openRatingsSheet();
+  if (!url) return; // Si no hay Place ID, el botón estará oculto igualmente.
+  window.open(url, "_blank", "noopener");
 });
 infoBtn.addEventListener("click", openInfoSheet);
 

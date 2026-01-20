@@ -195,24 +195,32 @@
                                     >Google Place ID (para enlaces de
                                     reseñas)</label
                                 >
-                                <input
-                                    id="perfilGooglePlaceId"
-                                    placeholder="ChIJ..."
-                                />
-                                <small class="hint"
-                                    >Se usa para abrir Google Maps / escribir
-                                    reseña automáticamente.</small
+
+                                <div
+                                    style="
+                                        display: flex;
+                                        gap: 8px;
+                                        align-items: center;
+                                    "
                                 >
-                            </div>
-                            <div>
-                                <label>&nbsp;</label>
-                                <button type="button" id="buscarPlaceIdBtn">
-                                    Buscar Place ID
-                                </button>
-                                <small class="hint"
-                                    >Abre un buscador para seleccionar el
-                                    local.</small
-                                >
+                                    <input
+                                        id="perfilGooglePlaceId"
+                                        placeholder="ChIJ..."
+                                        style="flex: 1"
+                                    />
+                                    <button
+                                        type="button"
+                                        id="buscarPlaceIdBtn"
+                                        class="secondaryBtn"
+                                    >
+                                        Buscar Place ID
+                                    </button>
+                                </div>
+
+                                <small class="hint">
+                                    Se usa para abrir Google Maps / escribir
+                                    reseña automáticamente.
+                                </small>
                             </div>
                         </div>
 

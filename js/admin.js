@@ -286,83 +286,15 @@ document.getElementById("guardarPerfilBtn").onclick = async () => {
   }
 };
 
-// ========== PLACE ID FINDER (Google Places Autocomplete) ==========
-function openPlaceIdModal() {
-  if (!placeIdModal) return;
-  placeIdModal.setAttribute("aria-hidden", "false");
-  document.body.style.overflow = "hidden";
-  // reset
-  if (placeSearchInput) placeSearchInput.value = "";
-  if (placeResultName) placeResultName.textContent = "-";
-  if (placeResultAddr) placeResultAddr.textContent = "-";
-  if (placeResultId) placeResultId.textContent = "-";
-  setTimeout(() => placeSearchInput?.focus(), 50);
-
-  // Inicializa Autocomplete si no está ya
-  initPlaceAutocompleteOnce();
-}
-
-function closePlaceIdModal() {
-  if (!placeIdModal) return;
-  placeIdModal.setAttribute("aria-hidden", "true");
-  document.body.style.overflow = "";
-}
-
-let __placeAutocompleteInit = false;
-function initPlaceAutocompleteOnce() {
-  if (__placeAutocompleteInit) return;
-  if (!placeSearchInput) return;
-
-  // Espera a que cargue Google Maps JS
-  if (!window.google?.maps?.places) {
-    // Si no cargó, mostramos aviso en consola; la UI seguirá abierta
-    console.warn(
-      "Google Maps JS no está cargado. Revisa TU_API_KEY y libraries=places.",
-    );
-    return;
-  }
-
-  const ac = new google.maps.places.Autocomplete(placeSearchInput, {
-    fields: ["place_id", "name", "formatted_address"],
-    // Puedes limitar a España si quieres:
-    componentRestrictions: { country: "es" },
-  });
-
-  ac.addListener("place_changed", () => {
-    const p = ac.getPlace();
-    const pid = p?.place_id || "";
-    if (placeResultName) placeResultName.textContent = p?.name || "-";
-    if (placeResultAddr)
-      placeResultAddr.textContent = p?.formatted_address || "-";
-    if (placeResultId) placeResultId.textContent = pid || "-";
-  });
-
-  __placeAutocompleteInit = true;
-}
-
-buscarPlaceIdBtn?.addEventListener("click", openPlaceIdModal);
-placeIdModalBackdrop?.addEventListener("click", closePlaceIdModal);
-placeIdModalClose?.addEventListener("click", closePlaceIdModal);
-document.addEventListener("keydown", (e) => {
-  if (
-    e.key === "Escape" &&
-    placeIdModal?.getAttribute("aria-hidden") === "false"
-  ) {
-    closePlaceIdModal();
-  }
-});
-
-usePlaceIdBtn?.addEventListener("click", async () => {
-  const pid = safeText(placeResultId?.textContent).trim();
-  if (!pid || pid === "-") return;
-  if (perfilGooglePlaceId) perfilGooglePlaceId.value = pid;
-
-  // Copiar al portapapeles (opcional)
-  try {
-    await navigator.clipboard.writeText(pid);
-  } catch {}
-
-  closePlaceIdModal();
+// ========== PLACE ID FINDER (simple) ==========
+// El botón "Buscar Place ID" SOLO abre la herramienta oficial de Google.
+// No usamos Maps JS API ni modales aquí.
+buscarPlaceIdBtn?.addEventListener("click", () => {
+  window.open(
+    "https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder",
+    "_blank",
+    "noopener",
+  );
 });
 
 // ========== ALERGENOS ==========
