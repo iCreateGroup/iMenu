@@ -49,12 +49,23 @@ const perfilTelefono = document.getElementById("perfilTelefono");
 const perfilDireccion = document.getElementById("perfilDireccion");
 const perfilWifi = document.getElementById("perfilWifi");
 const perfilReviews = document.getElementById("perfilReviews");
-const perfilGooglePlaceId = document.getElementById("perfilGooglePlaceId");
 const perfilRating = document.getElementById("perfilRating");
 const perfilRatingCount = document.getElementById("perfilRatingCount");
 const perfilPortadaUrl = document.getElementById("perfilPortadaUrl");
 const perfilPortadaFile = document.getElementById("perfilPortadaFile");
 const perfilPortadaPreview = document.getElementById("perfilPortadaPreview");
+const perfilGooglePlaceId = document.getElementById("perfilGooglePlaceId");
+const buscarPlaceIdBtn = document.getElementById("buscarPlaceIdBtn");
+
+// Modal Place ID
+const placeIdModal = document.getElementById("placeIdModal");
+const placeIdModalBackdrop = document.getElementById("placeIdModalBackdrop");
+const placeIdModalClose = document.getElementById("placeIdModalClose");
+const placeSearchInput = document.getElementById("placeSearchInput");
+const placeResultName = document.getElementById("placeResultName");
+const placeResultAddr = document.getElementById("placeResultAddr");
+const placeResultId = document.getElementById("placeResultId");
+const usePlaceIdBtn = document.getElementById("usePlaceIdBtn");
 
 // CATEGORIAS
 const editCategoriaId = document.getElementById("editCategoriaId");
@@ -216,11 +227,10 @@ async function cargarPerfil() {
     perfilDireccion.value = safeText(data.direccion);
     perfilWifi.value = safeText(data.wifi);
     perfilReviews.value = safeText(data.reviews_url);
-    if (perfilGooglePlaceId)
-      perfilGooglePlaceId.value = safeText(data.google_place_id);
     perfilRating.value = data.rating ?? "";
     perfilRatingCount.value = data.rating_count ?? "";
     perfilPortadaUrl.value = safeText(data.portada_url);
+    perfilGooglePlaceId.value = safeText(data.google_place_id);
     showPreview(perfilPortadaPreview, data.portada_url);
   }
 }
@@ -260,10 +270,7 @@ document.getElementById("guardarPerfilBtn").onclick = async () => {
       direccion: perfilDireccion.value.trim() || null,
       wifi: perfilWifi.value.trim() || null,
       reviews_url: perfilReviews.value.trim() || null,
-      google_place_id:
-        perfilGooglePlaceId && perfilGooglePlaceId.value.trim()
-          ? perfilGooglePlaceId.value.trim()
-          : null,
+      google_place_id: perfilGooglePlaceId.value.trim() || null,
       rating: perfilRating.value !== "" ? Number(perfilRating.value) : null,
       rating_count:
         perfilRatingCount.value !== "" ? Number(perfilRatingCount.value) : null,
@@ -278,6 +285,85 @@ document.getElementById("guardarPerfilBtn").onclick = async () => {
     alert(e.message);
   }
 };
+
+// ========== PLACE ID FINDER (Google Places Autocomplete) ==========
+function openPlaceIdModal() {
+  if (!placeIdModal) return;
+  placeIdModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  // reset
+  if (placeSearchInput) placeSearchInput.value = "";
+  if (placeResultName) placeResultName.textContent = "-";
+  if (placeResultAddr) placeResultAddr.textContent = "-";
+  if (placeResultId) placeResultId.textContent = "-";
+  setTimeout(() => placeSearchInput?.focus(), 50);
+
+  // Inicializa Autocomplete si no está ya
+  initPlaceAutocompleteOnce();
+}
+
+function closePlaceIdModal() {
+  if (!placeIdModal) return;
+  placeIdModal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+
+let __placeAutocompleteInit = false;
+function initPlaceAutocompleteOnce() {
+  if (__placeAutocompleteInit) return;
+  if (!placeSearchInput) return;
+
+  // Espera a que cargue Google Maps JS
+  if (!window.google?.maps?.places) {
+    // Si no cargó, mostramos aviso en consola; la UI seguirá abierta
+    console.warn(
+      "Google Maps JS no está cargado. Revisa TU_API_KEY y libraries=places.",
+    );
+    return;
+  }
+
+  const ac = new google.maps.places.Autocomplete(placeSearchInput, {
+    fields: ["place_id", "name", "formatted_address"],
+    // Puedes limitar a España si quieres:
+    componentRestrictions: { country: "es" },
+  });
+
+  ac.addListener("place_changed", () => {
+    const p = ac.getPlace();
+    const pid = p?.place_id || "";
+    if (placeResultName) placeResultName.textContent = p?.name || "-";
+    if (placeResultAddr)
+      placeResultAddr.textContent = p?.formatted_address || "-";
+    if (placeResultId) placeResultId.textContent = pid || "-";
+  });
+
+  __placeAutocompleteInit = true;
+}
+
+buscarPlaceIdBtn?.addEventListener("click", openPlaceIdModal);
+placeIdModalBackdrop?.addEventListener("click", closePlaceIdModal);
+placeIdModalClose?.addEventListener("click", closePlaceIdModal);
+document.addEventListener("keydown", (e) => {
+  if (
+    e.key === "Escape" &&
+    placeIdModal?.getAttribute("aria-hidden") === "false"
+  ) {
+    closePlaceIdModal();
+  }
+});
+
+usePlaceIdBtn?.addEventListener("click", async () => {
+  const pid = safeText(placeResultId?.textContent).trim();
+  if (!pid || pid === "-") return;
+  if (perfilGooglePlaceId) perfilGooglePlaceId.value = pid;
+
+  // Copiar al portapapeles (opcional)
+  try {
+    await navigator.clipboard.writeText(pid);
+  } catch {}
+
+  closePlaceIdModal();
+});
 
 // ========== ALERGENOS ==========
 function cargarAlergenosGrid() {

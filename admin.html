@@ -5,6 +5,51 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>iMenu Panel de Administración</title>
         <link rel="stylesheet" href="css/styles-admin.css" />
+
+        <style>
+            .imodal {
+                position: fixed;
+                inset: 0;
+                display: none;
+                z-index: 9999;
+            }
+            .imodal[aria-hidden="false"] {
+                display: block;
+            }
+            .imodal-backdrop {
+                position: absolute;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.45);
+                border: 0;
+            }
+            .imodal-card {
+                position: relative;
+                max-width: 760px;
+                margin: 7vh auto 0;
+                background: #fff;
+                border-radius: 16px;
+                padding: 16px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+            }
+            .imodal-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+            .imodal-close {
+                border: 0;
+                background: #f2f2f2;
+                border-radius: 10px;
+                padding: 8px 10px;
+                cursor: pointer;
+            }
+            @media (max-width: 820px) {
+                .imodal-card {
+                    margin: 10vh 12px 0;
+                }
+            }
+        </style>
     </head>
     <body>
         <div class="admin-container">
@@ -144,8 +189,32 @@
                         <label>URL valoraciones (Google Reviews, etc.)</label>
                         <input id="perfilReviews" placeholder="https://..." />
 
-                        <label>Google Place ID (para escribir reseña)</label>
-                        <input id="perfilGooglePlaceId" placeholder="ChIJ..." />
+                        <div class="grid-2" style="align-items: end">
+                            <div>
+                                <label
+                                    >Google Place ID (para enlaces de
+                                    reseñas)</label
+                                >
+                                <input
+                                    id="perfilGooglePlaceId"
+                                    placeholder="ChIJ..."
+                                />
+                                <small class="hint"
+                                    >Se usa para abrir Google Maps / escribir
+                                    reseña automáticamente.</small
+                                >
+                            </div>
+                            <div>
+                                <label>&nbsp;</label>
+                                <button type="button" id="buscarPlaceIdBtn">
+                                    Buscar Place ID
+                                </button>
+                                <small class="hint"
+                                    >Abre un buscador para seleccionar el
+                                    local.</small
+                                >
+                            </div>
+                        </div>
 
                         <div class="grid-2">
                             <div>
@@ -328,8 +397,90 @@
             </div>
         </div>
 
+        <!-- MODAL: Buscar Place ID (Google) -->
+        <div id="placeIdModal" class="imodal" aria-hidden="true">
+            <button
+                type="button"
+                class="imodal-backdrop"
+                id="placeIdModalBackdrop"
+                aria-label="Cerrar"
+            ></button>
+            <div
+                class="imodal-card"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Buscar Place ID"
+            >
+                <div class="imodal-header">
+                    <h3 style="margin: 0">🔎 Buscar Place ID</h3>
+                    <button
+                        type="button"
+                        class="imodal-close"
+                        id="placeIdModalClose"
+                        aria-label="Cerrar"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <p class="hint" style="margin-top: 8px">
+                    Escribe el nombre del local y selecciónalo. Te rellenará
+                    automáticamente <b>Google Place ID</b>.
+                </p>
+
+                <label>Buscar</label>
+                <input
+                    id="placeSearchInput"
+                    placeholder="Ej: Jabali Gastrobar, Herencia"
+                />
+
+                <div class="grid-2" style="margin-top: 10px">
+                    <div>
+                        <label>Nombre</label>
+                        <div id="placeResultName" class="muted">-</div>
+                    </div>
+                    <div>
+                        <label>Dirección</label>
+                        <div id="placeResultAddr" class="muted">-</div>
+                    </div>
+                </div>
+
+                <label style="margin-top: 12px">Place ID</label>
+                <div class="grid-2" style="align-items: center">
+                    <code
+                        id="placeResultId"
+                        style="
+                            display: block;
+                            padding: 10px;
+                            border-radius: 10px;
+                            background: #111;
+                            color: #fff;
+                            overflow: auto;
+                        "
+                        >-</code
+                    >
+                    <button type="button" id="usePlaceIdBtn">
+                        Usar este Place ID
+                    </button>
+                </div>
+
+                <small class="hint">
+                    Requiere una API key de Google Maps con <b>Places API</b> +
+                    <b>Maps JavaScript API</b> activadas (y la key restringida a
+                    tu dominio).
+                </small>
+            </div>
+        </div>
+
         <!-- SortableJS (necesario para ordenar en MOVIL y PC) -->
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+        <!-- Google Maps JS (para Place ID Finder). Sustituye TU_API_KEY y restringe por dominio -->
+        <script
+            async
+            defer
+            src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places"
+        ></script>
 
         <script type="module" src="js/admin.js"></script>
     </body>
