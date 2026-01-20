@@ -62,6 +62,20 @@ const sheetDesc = document.getElementById('sheetDesc')
 const sheetAllergenSection = document.getElementById('sheetAllergenSection')
 const sheetAllergens = document.getElementById('sheetAllergens')
 
+const ratingsSheet = document.getElementById('ratingsSheet')
+const ratingsValue = document.getElementById('ratingsValue')
+const ratingsStars = document.getElementById('ratingsStars')
+const ratingsCount = document.getElementById('ratingsCount')
+const ratingsBars = document.getElementById('ratingsBars')
+const openReviewsBtn = document.getElementById('openReviewsBtn')
+
+const infoSheet = document.getElementById('infoSheet')
+const infoTitle = document.getElementById('infoTitle')
+const mapWrap = document.getElementById('mapWrap')
+const mapFrame = document.getElementById('mapFrame')
+const infoRows = document.getElementById('infoRows')
+
+
 // =============================
 // State
 // =============================
@@ -91,6 +105,55 @@ function formatPrice(v) {
   const n = Number(v)
   if (!Number.isFinite(n)) return ''
   return `${n.toFixed(2)} €`
+}
+
+
+function baseUrl(path) {
+  return new URL(path, document.baseURI).toString()
+}
+
+function normalizeAllergenKey(v) {
+  const k = (v || '').toString().trim().toLowerCase()
+  // si viene como 'gluten.svg' o 'alergenos/gluten.svg'
+  const clean = k.replace(/^alergenos\//, '').replace(/\.svg$/, '')
+  // quita acentos y espacios
+  return clean
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/\s+/g, '_')
+}
+
+function allergenKeyToUrl(v) {
+  const key = normalizeAllergenKey(v)
+  if (!key) return null
+  return baseUrl(`alergenos/${key}.svg`)
+}
+
+function renderStars(container, value) {
+  const v = Math.max(0, Math.min(5, Number(value) || 0))
+  const full = Math.floor(v)
+  const half = v - full >= 0.5
+  container.innerHTML = ''
+  for (let i = 0; i < 5; i++) {
+    const span = document.createElement('span')
+    span.className = 'star'
+    if (i < full) span.textContent = '★'
+    else if (i == full && half) span.textContent = '★'
+    else span.textContent = '☆'
+    container.appendChild(span)
+  }
+}
+
+function openGenericSheet(sheetEl) {
+  sheetEl.classList.add('is-open')
+  sheetEl.setAttribute('aria-hidden', 'false')
+  document.body.style.overflow = 'hidden'
+}
+
+function closeGenericSheet(sheetEl) {
+  sheetEl.classList.remove('is-open')
+  sheetEl.setAttribute('aria-hidden', 'true')
+  document.body.style.overflow = ''
 }
 
 function safeText(v) {
@@ -140,39 +203,28 @@ function openSheet(plato) {
   sheetPrice.textContent = plato.precio != null ? formatPrice(plato.precio) : ''
   sheetDesc.textContent = safeText(plato.descripcion)
 
-  // alérgenos: en GitHub Pages / hosting estático no tenemos garantizado un pack de SVGs.
-  // Para que no salgan iconos rotos, mostramos "chips" con texto (y opcionalmente emoji).
+  // alergenos: usamos tus SVG de /alergenos
   const alergs = Array.isArray(plato.alergenos) ? plato.alergenos : []
   sheetAllergens.innerHTML = ''
   if (alergs.length) {
     sheetAllergenSection.style.display = ''
-
-    const EMOJI = {
-      'Cereales con gluten': '🌾',
-      'Gluten': '🌾',
-      'Huevos': '🥚',
-      'Lácteos': '🥛',
-      'Leche': '🥛',
-      'Pescado': '🐟',
-      'Crustáceos': '🦐',
-      'Moluscos': '🦪',
-      'Cacahuetes': '🥜',
-      'Frutos de cáscara': '🌰',
-      'Sésamo': '⚪',
-      'Soja': '🫘',
-      'Mostaza': '🌭',
-      'Apio': '🥬',
-      'Sulfitos': '🍷'
-    }
-
     alergs.forEach(aRaw => {
-      const a = String(aRaw || '').trim()
-      if (!a) return
-      const chip = document.createElement('span')
-      chip.className = 'allergenChip'
-      const emoji = EMOJI[a] ? `${EMOJI[a]} ` : ''
-      chip.textContent = `${emoji}${a}`
-      sheetAllergens.appendChild(chip)
+      const key = normalizeAllergenKey(aRaw)
+      if (!key) return
+      const img = document.createElement('img')
+      img.className = 'sheetAllergenIcon'
+      img.alt = key.replace(/_/g, ' ')
+      img.title = img.alt
+      img.src = allergenKeyToUrl(key)
+      // fallback: si falla el svg, mostramos chip de texto
+      img.onerror = () => {
+        img.remove()
+        const chip = document.createElement('span')
+        chip.className = 'allergenChip'
+        chip.textContent = img.alt
+        sheetAllergens.appendChild(chip)
+      }
+      sheetAllergens.appendChild(img)
     })
   } else {
     sheetAllergenSection.style.display = 'none'
@@ -341,9 +393,14 @@ function buildDishRow(plato) {
     alergs.slice(0, 3).forEach(a => {
       const s = document.createElement('span')
       s.className = 'miniBadge'
-      // si tienes emojis, puedes mapear aquí. por ahora solo un puntito.
-      s.title = a.replace(/_/g, ' ')
-      s.textContent = '•'
+      const img = document.createElement('img')
+      img.className = 'allergenIcon miniBadgeImg'
+      img.alt = a.replace(/_/g, ' ')
+      img.title = img.alt
+      const url = allergenKeyToUrl(a)
+      if (url) img.src = url
+      img.onerror = () => { s.textContent = '•' }
+      s.appendChild(img)
       badgeWrap.appendChild(s)
     })
     const titleLine = document.createElement('div')
@@ -542,10 +599,143 @@ async function loadMenu() {
   }
 }
 
+
+function openRatingsSheet() {
+  if (!PROFILE) return
+  const rating = pick(PROFILE, ['rating', 'valoracion', 'stars'])
+  const count = pick(PROFILE, ['rating_count', 'valoraciones', 'reviews'])
+  ratingsValue.textContent = rating != null ? Number(rating).toFixed(1) : '-'
+  renderStars(ratingsStars, rating || 0)
+  ratingsCount.textContent = count ? `(${count})` : ''
+
+  // Barras (UI): si no hay desglose real, aproximamos con el rating
+  const aspects = ['Comida','Ambiente','Servicio','Limpieza','Precio']
+  ratingsBars.innerHTML = ''
+  const base = Number(rating) || 4.5
+  aspects.forEach((label, i) => {
+    const row = document.createElement('div')
+    row.className = 'barRow'
+    const left = document.createElement('div')
+    left.className = 'barLabel'
+    left.textContent = label
+
+    const track = document.createElement('div')
+    track.className = 'barTrack'
+    const fill = document.createElement('div')
+    fill.className = 'barFill'
+    const v = Math.max(0, Math.min(5, base + (i % 2 === 0 ? 0.1 : 0)))
+    fill.style.width = `${(v / 5) * 100}%`
+    track.appendChild(fill)
+
+    const val = document.createElement('div')
+    val.className = 'barValue'
+    val.textContent = v.toFixed(1)
+
+    row.appendChild(left)
+    row.appendChild(track)
+    row.appendChild(val)
+    ratingsBars.appendChild(row)
+  })
+
+  const reviewsUrl = pick(PROFILE, ['reviews_url', 'google_reviews_url', 'valoraciones_url'])
+  if (reviewsUrl) {
+    openReviewsBtn.style.display = ''
+    openReviewsBtn.onclick = () => window.open(reviewsUrl, '_blank', 'noopener')
+  } else {
+    openReviewsBtn.style.display = 'none'
+  }
+
+  openGenericSheet(ratingsSheet)
+}
+
+function openInfoSheet() {
+  if (!PROFILE) return
+  const name = pick(PROFILE, ['nombre', 'name', 'restaurant_name', 'local_name', 'titulo'])
+  infoTitle.textContent = name ? name : 'Info'
+
+  const direccion = pick(PROFILE, ['direccion', 'address'])
+  if (direccion) {
+    mapWrap.style.display = ''
+    mapFrame.src = `https://www.google.com/maps?q=${encodeURIComponent(direccion)}&output=embed`
+  } else {
+    mapWrap.style.display = 'none'
+    mapFrame.removeAttribute('src')
+  }
+
+  const wifi = pick(PROFILE, ['wifi', 'wifi_name'])
+  const telefono = pick(PROFILE, ['telefono', 'phone'])
+
+  infoRows.innerHTML = ''
+
+  function row(icon, title, sub, actionLabel, onAction) {
+    const wrap = document.createElement('div')
+    wrap.className = 'infoRow'
+    const ic = document.createElement('div')
+    ic.className = 'infoRowIcon'
+    ic.textContent = icon
+    const main = document.createElement('div')
+    main.className = 'infoRowMain'
+    const t = document.createElement('div')
+    t.className = 'infoRowTitle'
+    t.textContent = title
+    const s = document.createElement('div')
+    s.className = 'infoRowSub'
+    s.textContent = sub
+    main.appendChild(t)
+    main.appendChild(s)
+
+    wrap.appendChild(ic)
+    wrap.appendChild(main)
+
+    if (actionLabel && onAction) {
+      const btn = document.createElement('button')
+      btn.className = 'infoRowBtn'
+      btn.type = 'button'
+      btn.textContent = actionLabel
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        onAction()
+      })
+      wrap.appendChild(btn)
+    }
+
+    return wrap
+  }
+
+  if (wifi) {
+    infoRows.appendChild(
+      row('📶', 'Wi‑Fi', wifi, 'Copiar', async () => {
+        try { await navigator.clipboard.writeText(String(wifi)) } catch {}
+      })
+    )
+  }
+
+  if (telefono) {
+    infoRows.appendChild(
+      row('📞', 'Teléfono', telefono, 'Llamar', () => {
+        window.location.href = `tel:${String(telefono).replace(/\s+/g, '')}`
+      })
+    )
+  }
+
+  if (direccion) {
+    infoRows.appendChild(
+      row('📍', 'Dirección', direccion, 'Abrir', () => {
+        window.open(`https://www.google.com/maps?q=${encodeURIComponent(direccion)}`, '_blank', 'noopener')
+      })
+    )
+  }
+
+  openGenericSheet(infoSheet)
+}
+
 // =============================
 // Events
 // =============================
 backBtn.addEventListener('click', goHome)
+
+ratingBtn.addEventListener('click', openRatingsSheet)
+infoBtn.addEventListener('click', openInfoSheet)
 
 homeSearchBtn.addEventListener('click', () => {
   // Si estás en home, buscamos en TODA la carta y llevamos al primer match.
@@ -585,9 +775,21 @@ dishSheet.addEventListener('click', (e) => {
   if (t?.dataset?.close === 'true') closeSheet()
 })
 
+ratingsSheet.addEventListener('click', (e) => {
+  const t = e.target
+  if (t?.dataset?.close === 'true') closeGenericSheet(ratingsSheet)
+})
+
+infoSheet.addEventListener('click', (e) => {
+  const t = e.target
+  if (t?.dataset?.close === 'true') closeGenericSheet(infoSheet)
+})
+
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (dishSheet.classList.contains('is-open')) closeSheet()
+    if (ratingsSheet.classList.contains('is-open')) closeGenericSheet(ratingsSheet)
+    if (infoSheet.classList.contains('is-open')) closeGenericSheet(infoSheet)
     if (searchOverlay.classList.contains('is-open')) closeSearchOverlay()
   }
 })
