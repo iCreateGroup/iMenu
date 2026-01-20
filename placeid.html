@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Finder Place ID</title>
+        <link rel="stylesheet" href="placeid.css" />
+    </head>
+    <body>
+        <div class="wrap">
+            <h1>Buscar Place ID</h1>
+
+            <div class="card">
+                <p class="muted">Escribe el nombre del local y selecciónalo.</p>
+
+                <!-- Autocomplete widget (Web Components) -->
+                <gmp-place-autocomplete id="pac"></gmp-place-autocomplete>
+
+                <!-- Map -->
+                <gmp-map id="map" zoom="6" center="40.4,-3.7"></gmp-map>
+
+                <div class="out">
+                    <div><b>Nombre:</b> <span id="placeName">-</span></div>
+                    <div><b>Dirección:</b> <span id="placeAddr">-</span></div>
+                    <div class="row">
+                        <div class="grow">
+                            <b>Place ID:</b> <code id="placeId">-</code>
+                        </div>
+                        <button id="copyBtn" type="button">Copiar</button>
+                    </div>
+                </div>
+            </div>
+
+            <p class="hint">
+                Pega el Place ID en tu campo <b>google_place_id</b> del admin.
+            </p>
+        </div>
+
+        <script type="module" src="placeid.js"></script>
+
+        <!-- IMPORTANTE: pon tu API KEY -->
+        <script
+            async
+            src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places"
+        ></script>
+    </body>
+</html>
