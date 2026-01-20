@@ -49,6 +49,7 @@ const perfilTelefono = document.getElementById("perfilTelefono");
 const perfilDireccion = document.getElementById("perfilDireccion");
 const perfilWifi = document.getElementById("perfilWifi");
 const perfilReviews = document.getElementById("perfilReviews");
+const perfilGooglePlaceId = document.getElementById("perfilGooglePlaceId");
 const perfilRating = document.getElementById("perfilRating");
 const perfilRatingCount = document.getElementById("perfilRatingCount");
 const perfilPortadaUrl = document.getElementById("perfilPortadaUrl");
@@ -215,6 +216,8 @@ async function cargarPerfil() {
     perfilDireccion.value = safeText(data.direccion);
     perfilWifi.value = safeText(data.wifi);
     perfilReviews.value = safeText(data.reviews_url);
+    if (perfilGooglePlaceId)
+      perfilGooglePlaceId.value = safeText(data.google_place_id);
     perfilRating.value = data.rating ?? "";
     perfilRatingCount.value = data.rating_count ?? "";
     perfilPortadaUrl.value = safeText(data.portada_url);
@@ -257,6 +260,10 @@ document.getElementById("guardarPerfilBtn").onclick = async () => {
       direccion: perfilDireccion.value.trim() || null,
       wifi: perfilWifi.value.trim() || null,
       reviews_url: perfilReviews.value.trim() || null,
+      google_place_id:
+        perfilGooglePlaceId && perfilGooglePlaceId.value.trim()
+          ? perfilGooglePlaceId.value.trim()
+          : null,
       rating: perfilRating.value !== "" ? Number(perfilRating.value) : null,
       rating_count:
         perfilRatingCount.value !== "" ? Number(perfilRatingCount.value) : null,
