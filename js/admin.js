@@ -212,7 +212,7 @@ document.querySelectorAll(".tab").forEach((tab) => {
 
 // ========== PERFIL ==========
 async function cargarPerfil() {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("Perfil")
     .select("*")
     .eq("user_id", user.id)
@@ -232,6 +232,9 @@ async function cargarPerfil() {
     // Wi-Fi: SOLO nombre + clave (sin columna legacy "wifi")
     perfilWifi.value = safeText(data.wifi_name);
     if (perfilWifiPass) perfilWifiPass.value = safeText(data.wifi_pass);
+
+    // El PIN no se puede leer (se guarda hasheado). Déjalo en blanco.
+    if (perfilWifiPin) perfilWifiPin.value = "";
 
     perfilReviews.value = safeText(data.reviews_url);
     perfilRating.value = data.rating ?? "";
@@ -290,6 +293,19 @@ document.getElementById("guardarPerfilBtn").onclick = async () => {
 
     const { error } = await db.from("Perfil").upsert(payload);
     if (error) throw error;
+
+    // Si el usuario ha escrito un PIN, lo guardamos (hasheado) via RPC
+    const pinRaw = (perfilWifiPin?.value || "").trim();
+    if (pinRaw) {
+      const { error: pinErr } = await supabase.rpc("imenu_set_wifi_pin", {
+        p_pin: pinRaw,
+      });
+      if (pinErr) throw pinErr;
+      // Limpia el input por seguridad (no se queda visible)
+      try {
+        perfilWifiPin.value = "";
+      } catch {}
+    }
 
     alert("Perfil guardado ✅");
   } catch (e) {
@@ -413,7 +429,7 @@ function cargarAlergenosGrid() {
 
 // ========== CATEGORIAS ==========
 async function cargarCategorias() {
-  const { data: categorias, error } = await supabase
+  const { data: categorias, error } = await db
     .from("Categorias")
     .select("*")
     .eq("user_id", user.id)
@@ -531,7 +547,7 @@ guardarCategoriaBtn.onclick = async () => {
   } else {
     // orden al final
     const nextOrden = ALL_CATEGORIAS.length;
-    await supabase
+    await db
       .from("Categorias")
       .insert({ nombre, user_id: user.id, activa: true, orden: nextOrden });
   }
@@ -543,10 +559,7 @@ guardarCategoriaBtn.onclick = async () => {
 
 async function toggleCategoria(id) {
   const cat = ALL_CATEGORIAS.find((c) => String(c.id) === String(id));
-  await supabase
-    .from("Categorias")
-    .update({ activa: !cat.activa })
-    .eq("id", id);
+  await db.from("Categorias").update({ activa: !cat.activa }).eq("id", id);
   await cargarCategorias();
 }
 
@@ -615,7 +628,7 @@ platoImagenFile?.addEventListener("change", () => {
 cancelPlatoBtn.onclick = resetPlatoForm;
 
 async function cargarPlatos() {
-  const { data: platos, error } = await supabase
+  const { data: platos, error } = await db
     .from("Menu")
     .select("*")
     .eq("user_id", user.id)

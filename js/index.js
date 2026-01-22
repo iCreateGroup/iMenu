@@ -702,7 +702,7 @@ async function loadMenu() {
     // Nuevo modo: slug en Perfil.slug
     const slug = String(clienteParam).trim();
     const { data: perfilBySlug, error: slugErr } = await db
-      .from("Perfil")
+      .from("Perfil_publico")
       .select("user_id")
       .eq("slug", slug)
       .limit(1)
