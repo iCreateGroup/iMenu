@@ -5,6 +5,7 @@ const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvenp4ZHJqd2pza213bXhzY3FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5ODkyNjgsImV4cCI6MjA4MTU2NTI2OH0.3C_4cTXacx0Gf8eRtBYp2uaNZ61OE4SEEOUTDSW4P98";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+const db = supabase.schema("iMenu");
 // Bucket recomendado para imágenes (Supabase Storage)
 const STORAGE_BUCKET = "imenu";
 
@@ -49,6 +50,7 @@ const perfilTelefono = document.getElementById("perfilTelefono");
 const perfilDireccion = document.getElementById("perfilDireccion");
 const perfilWifi = document.getElementById("perfilWifi");
 const perfilWifiPass = document.getElementById("perfilWifiPass");
+const perfilWifiPin = document.getElementById("perfilWifiPin");
 const perfilReviews = document.getElementById("perfilReviews");
 const perfilRating = document.getElementById("perfilRating");
 const perfilRatingCount = document.getElementById("perfilRatingCount");
@@ -286,10 +288,7 @@ document.getElementById("guardarPerfilBtn").onclick = async () => {
       portada_url: portadaFinal || null,
     };
 
-    const { error } = await supabase
-      .schema("iMenu")
-      .from("Perfil")
-      .upsert(payload);
+    const { error } = await db.from("Perfil").upsert(payload);
     if (error) throw error;
 
     alert("Perfil guardado ✅");
@@ -528,11 +527,7 @@ guardarCategoriaBtn.onclick = async () => {
 
   const id = editCategoriaId.value;
   if (id) {
-    await supabase
-      .schema("iMenu")
-      .from("Categorias")
-      .update({ nombre })
-      .eq("id", id);
+    await db.from("Categorias").update({ nombre }).eq("id", id);
   } else {
     // orden al final
     const nextOrden = ALL_CATEGORIAS.length;
@@ -560,7 +555,7 @@ async function eliminarCategoria(id) {
     !confirm("¿Eliminar categoría? También se quedarán platos sin categoría.")
   )
     return;
-  await supabase.schema("iMenu").from("Categorias").delete().eq("id", id);
+  await db.from("Categorias").delete().eq("id", id);
   await cargarCategorias();
   await cargarPlatos();
 }
@@ -581,11 +576,7 @@ function makeSortableCategorias(container) {
       const items = [...container.querySelectorAll(".categoria-item")];
       for (let i = 0; i < items.length; i++) {
         const id = items[i].dataset.id;
-        await supabase
-          .schema("iMenu")
-          .from("Categorias")
-          .update({ orden: i })
-          .eq("id", id);
+        await db.from("Categorias").update({ orden: i }).eq("id", id);
       }
       await cargarCategorias();
     },
@@ -772,17 +763,13 @@ function editarPlato(id) {
 
 async function togglePlato(id) {
   const p = ALL_PLATOS.find((x) => String(x.id) === String(id));
-  await supabase
-    .schema("iMenu")
-    .from("Menu")
-    .update({ activo: !p.activo })
-    .eq("id", id);
+  await db.from("Menu").update({ activo: !p.activo }).eq("id", id);
   await cargarPlatos();
 }
 
 async function eliminarPlato(id) {
   if (!confirm("¿Eliminar plato?")) return;
-  await supabase.schema("iMenu").from("Menu").delete().eq("id", id);
+  await db.from("Menu").delete().eq("id", id);
   await cargarPlatos();
 }
 
@@ -814,11 +801,7 @@ function makeSortablePlatos(container) {
         if (!plato) continue;
 
         if (!catId || Number(plato.categoria_id) === catId) {
-          await supabase
-            .schema("iMenu")
-            .from("Menu")
-            .update({ orden: i })
-            .eq("id", id);
+          await db.from("Menu").update({ orden: i }).eq("id", id);
         }
       }
 
@@ -857,7 +840,7 @@ guardarPlatoBtn.onclick = async () => {
 
     const id = editPlatoId.value;
     const { error } = id
-      ? await supabase.schema("iMenu").from("Menu").update(payload).eq("id", id)
+      ? await db.from("Menu").update(payload).eq("id", id)
       : await supabase
           .from("Menu")
           .insert({ ...payload, activo: true, orden: 0 });

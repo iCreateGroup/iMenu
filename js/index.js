@@ -7,8 +7,8 @@ const supabaseUrl = "https://qozzxdrjwjskmwmxscqj.supabase.co";
 const supabaseKey =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvenp4ZHJqd2pza213bXhzY3FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5ODkyNjgsImV4cCI6MjA4MTU2NTI2OH0.3C_4cTXacx0Gf8eRtBYp2uaNZ61OE4SEEOUTDSW4P98";
 const supabase = createClient(supabaseUrl, supabaseKey);
-const db = supabase.schema("iMenu");
 
+const db = supabase.schema("iMenu");
 const params = new URLSearchParams(window.location.search);
 // Compatibilidad:
 // - ?cliente=<uuid> (modo antiguo)
@@ -870,17 +870,9 @@ function openInfoSheet() {
   if (wifiName) {
     const sub = wifiPass ? `${wifiName}` : `${wifiName}`;
     infoRows.appendChild(
-      row(
-        "📶",
-        "Wi‑Fi",
-        sub,
-        wifiPass ? "Copiar clave" : "Copiar",
-        async () => {
-          try {
-            await navigator.clipboard.writeText(String(wifiPass || wifiName));
-          } catch {}
-        },
-      ),
+      row("📶", "Wi‑Fi", sub, "Ver clave", () => {
+        openWifiPinModal({ wifiName, clienteId });
+      }),
     );
   }
 
@@ -984,3 +976,107 @@ document.addEventListener("keydown", (e) => {
 // Init
 // =============================
 loadMenu();
+
+// =============================
+// Wi‑Fi PIN modal (revelar clave)
+// =============================
+const wifiPinModal = document.getElementById("wifiPinModal");
+const wifiPinBackdrop = document.getElementById("wifiPinBackdrop");
+const wifiPinClose = document.getElementById("wifiPinClose");
+const wifiPinInput = document.getElementById("wifiPinInput");
+const wifiPinSubmit = document.getElementById("wifiPinSubmit");
+const wifiPinCopy = document.getElementById("wifiPinCopy");
+const wifiPinError = document.getElementById("wifiPinError");
+const wifiPinResult = document.getElementById("wifiPinResult");
+const wifiPinSsid = document.getElementById("wifiPinSsid");
+
+let _wifiCtx = null; // {wifiName, clienteId, slug, wifiPass}
+
+function showWifiError(msg) {
+  if (!wifiPinError) return;
+  wifiPinError.textContent = msg;
+  wifiPinError.style.display = msg ? "block" : "none";
+}
+
+function showWifiResult(msg) {
+  if (!wifiPinResult) return;
+  wifiPinResult.textContent = msg;
+  wifiPinResult.style.display = msg ? "block" : "none";
+}
+
+function openWifiPinModal(ctx) {
+  _wifiCtx = { ...ctx, wifiPass: null };
+  if (wifiPinSsid)
+    wifiPinSsid.textContent = ctx.wifiName ? `Red: ${ctx.wifiName}` : "";
+  showWifiError("");
+  showWifiResult("");
+  if (wifiPinInput) wifiPinInput.value = "";
+  if (wifiPinModal) {
+    wifiPinModal.setAttribute("aria-hidden", "false");
+    wifiPinModal.classList.add("open");
+  }
+  setTimeout(() => wifiPinInput?.focus?.(), 50);
+}
+
+function closeWifiPinModal() {
+  if (wifiPinModal) {
+    wifiPinModal.setAttribute("aria-hidden", "true");
+    wifiPinModal.classList.remove("open");
+  }
+  _wifiCtx = null;
+}
+
+async function fetchWifiPass() {
+  if (!_wifiCtx) return null;
+
+  const pin = wifiPinInput?.value?.trim();
+  if (!pin) {
+    showWifiError("Introduce el PIN.");
+    return null;
+  }
+
+  showWifiError("");
+
+  // RPC pública: valida PIN y devuelve wifi_pass
+  const { data, error } = await supabase.rpc("imenu_get_wifi_by_user", {
+    p_user_id: _wifiCtx.clienteId,
+    p_pin: pin,
+  });
+
+  if (error) {
+    showWifiError("No se pudo verificar el PIN. Inténtalo de nuevo.");
+    return null;
+  }
+
+  // data puede ser array (table function)
+  const row = Array.isArray(data) ? data[0] : data;
+  const pass = row?.wifi_pass;
+
+  if (!pass) {
+    showWifiError("PIN incorrecto.");
+    return null;
+  }
+
+  _wifiCtx.wifiPass = String(pass);
+  showWifiResult(`Clave: ${_wifiCtx.wifiPass}`);
+  return _wifiCtx.wifiPass;
+}
+
+wifiPinBackdrop?.addEventListener("click", closeWifiPinModal);
+wifiPinClose?.addEventListener("click", closeWifiPinModal);
+
+wifiPinSubmit?.addEventListener("click", async () => {
+  await fetchWifiPass();
+});
+
+wifiPinCopy?.addEventListener("click", async () => {
+  const pass = _wifiCtx?.wifiPass || (await fetchWifiPass());
+  if (!pass) return;
+  try {
+    await navigator.clipboard.writeText(String(pass));
+  } catch {}
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeWifiPinModal();
+});

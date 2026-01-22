@@ -356,7 +356,111 @@
                 </div>
             </div>
         </div>
+
+        <!-- WIFI PIN (overlay) -->
+        <div class="zoomModal" id="wifiPinModal" aria-hidden="true">
+            <button
+                class="zoomBackdrop"
+                id="wifiPinBackdrop"
+                type="button"
+                aria-label="Cerrar"
+            ></button>
+            <div
+                class="zoomCard"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Wi‑Fi"
+            >
+                <button
+                    class="zoomClose"
+                    id="wifiPinClose"
+                    type="button"
+                    aria-label="Cerrar"
+                >
+                    ✕
+                </button>
+                <div class="zoomInner" style="gap: 12px">
+                    <div class="zoomTitle" style="margin-bottom: 4px">
+                        Wi‑Fi
+                    </div>
+                    <div id="wifiPinSsid" style="opacity: 0.9"></div>
+
+                    <label
+                        style="
+                            width: 100%;
+                            text-align: left;
+                            font-size: 14px;
+                            opacity: 0.9;
+                        "
+                    >
+                        Introduce el PIN
+                        <input
+                            id="wifiPinInput"
+                            type="password"
+                            inputmode="numeric"
+                            placeholder="PIN"
+                            autocomplete="one-time-code"
+                            style="
+                                margin-top: 8px;
+                                width: 100%;
+                                padding: 12px 14px;
+                                border-radius: 12px;
+                                border: 1px solid rgba(255, 255, 255, 0.18);
+                                background: rgba(0, 0, 0, 0.25);
+                                color: inherit;
+                            "
+                        />
+                    </label>
+
+                    <div
+                        id="wifiPinError"
+                        style="display: none; color: #ffb4b4; font-size: 13px"
+                    ></div>
+
+                    <div style="display: flex; gap: 10px; width: 100%">
+                        <button
+                            id="wifiPinSubmit"
+                            type="button"
+                            style="
+                                flex: 1;
+                                padding: 12px 14px;
+                                border-radius: 14px;
+                                border: 0;
+                                cursor: pointer;
+                            "
+                        >
+                            Ver clave
+                        </button>
+                        <button
+                            id="wifiPinCopy"
+                            type="button"
+                            style="
+                                flex: 1;
+                                padding: 12px 14px;
+                                border-radius: 14px;
+                                border: 0;
+                                cursor: pointer;
+                                opacity: 0.85;
+                            "
+                        >
+                            Copiar clave
+                        </button>
+                    </div>
+
+                    <div
+                        id="wifiPinResult"
+                        style="
+                            display: none;
+                            width: 100%;
+                            text-align: left;
+                            font-size: 14px;
+                            line-height: 1.35;
+                        "
+                    ></div>
+                </div>
+            </div>
+        </div>
+
+        <script type="module" src="js/index.js"></script>
     </body>
 </html>
-
-<script type="module" src="js/index.js"></script>
