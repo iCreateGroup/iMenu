@@ -1039,7 +1039,7 @@ async function fetchWifiPass() {
 
   // RPC pública: valida PIN y devuelve wifi_pass
   const { data, error } = await supabase.rpc("imenu_get_wifi_by_user", {
-    p_user_id: _wifiCtx.clienteId,
+    p_user_id: clienteId,
     p_pin: pin,
   });
 
