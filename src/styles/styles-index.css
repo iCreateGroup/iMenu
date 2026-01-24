@@ -146,7 +146,7 @@ button:active,
 .screen{
   opacity:1;
   transform:translateY(0);
-  transition:opacity .18s ease, transform .18s ease;
+  transition:opacity .28s cubic-bezier(.22,1,.36,1), transform .28s cubic-bezier(.22,1,.36,1);
 }
 .screen.is-fade-out{opacity:0; transform:translateY(6px)}
 .screen.is-fade-in{opacity:1; transform:translateY(0)}
@@ -283,50 +283,87 @@ button:active,
   max-height:60vh;
   overflow:auto;
 }
-.searchCat{
+.searchSubGroup{
   padding:6px 8px 10px;
+  border-top:1px solid var(--line);
 }
-.searchCat + .searchCat{border-top:1px solid var(--line)}
-.searchCatToggle{
+.searchSubGroup:first-child{border-top:0}
+.searchSubToggle{
+  position:relative;
   width:100%;
   border:0;
   background:transparent;
   text-align:center;
-  padding:6px 6px 8px;
-  cursor:pointer;
-}
-.searchCatTitle{
-  margin:0;
-  font-size:18px;
-  font-weight:900;
-  letter-spacing:-.01em;
-}
-.searchCatBody{padding:4px 0 6px}
-.searchSubGroup{
-  padding:4px 8px 8px;
-}
-.searchSubToggle{
-  width:100%;
-  border:0;
-  background:transparent;
-  text-align:left;
-  padding:4px 6px;
+  padding:6px 30px 8px;
   cursor:pointer;
 }
 .searchSubTitle{
   margin:0;
-  font-weight:800;
-  font-size:13px;
-  color:var(--muted);
+  font-weight:900;
+  font-size:18px;
+  letter-spacing:-.01em;
   text-transform:capitalize;
 }
+.dropdownArrow{
+  position:absolute;
+  right:6px;
+  top:50%;
+  width:18px;
+  height:18px;
+  transform:translateY(-50%) rotate(0deg);
+  transition:transform .2s ease;
+  color:#111;
+}
+.searchSubToggle[aria-expanded="true"] .dropdownArrow{
+  transform:translateY(-50%) rotate(90deg);
+}
+.dropdownArrow path{
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2.2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
 .searchItems{
-  display:none;
+  max-height:0;
+  opacity:0;
+  transform:translateY(-4px);
+  overflow:hidden;
+  display:flex;
   flex-direction:column;
   gap:0;
-  margin-top:6px;
+  margin-top:8px;
+  transition:max-height .25s ease, opacity .2s ease, transform .2s ease;
+  pointer-events:none;
 }
-.searchItems.is-open{display:flex}
+.searchItems.is-open{
+  max-height:1200px;
+  opacity:1;
+  transform:translateY(0);
+  pointer-events:auto;
+}
+.searchClose{
+  position:absolute;
+  top:10px;
+  right:10px;
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:#fff;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
+.searchClose svg{
+  width:18px;
+  height:18px;
+  fill:none;
+  stroke:#111;
+  stroke-width:2.2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
 .searchEmpty{
   padding:14px 12px;
   color:var(--muted);

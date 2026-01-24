@@ -79,8 +79,6 @@ const infoTitle = document.getElementById("infoTitle");
 const mapWrap = document.getElementById("mapWrap");
 const mapFrame = document.getElementById("mapFrame");
 const infoRows = document.getElementById("infoRows");
-const dishSheetCard = dishSheet?.querySelector(".sheetCard");
-const dishSheetHandle = dishSheet?.querySelector(".sheetHandle");
 
 // =============================
 // State
@@ -91,8 +89,8 @@ let PLATOS = [];
 let ACTIVE_CAT_ID = null;
 let ACTIVE_SUBCAT = "all";
 let SEARCH_Q = "";
-let SEARCH_ACTIVE_CAT_ID = null;
 let SEARCH_ACTIVE_SUBCAT_KEY = null;
+let historyLocked = false;
 
 // Perfil (opcional): si existe tabla "Perfiles" o "Perfil", la usamos.
 let PROFILE = null;
@@ -235,6 +233,7 @@ function setView(which) {
   const home = which === "home";
   const show = home ? viewHome : viewCategory;
   const hide = home ? viewCategory : viewHome;
+  const animMs = 280;
 
   if (show === viewHome) show.classList.remove("is-hidden");
   else show.classList.add("is-active");
@@ -250,14 +249,17 @@ function setView(which) {
     hide.classList.remove("is-fade-out");
     if (hide === viewHome) hide.classList.add("is-hidden");
     else hide.classList.remove("is-active");
-  }, 180);
+  }, animMs);
 
   setTimeout(() => {
     show.classList.remove("is-fade-in");
-  }, 180);
+  }, animMs);
 }
 
 function openSearch() {
+  if (!searchOverlay.classList.contains("is-open")) {
+    pushHistoryState({ modal: "search" });
+  }
   searchOverlay.classList.add("is-open");
   searchOverlay.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
@@ -271,8 +273,40 @@ function closeSearchOverlay() {
   document.body.style.overflow = "";
 }
 
+function pushHistoryState(state) {
+  if (historyLocked) return;
+  history.pushState(state, "");
+}
+
+function handleBackNavigation() {
+  historyLocked = true;
+
+  if (searchOverlay?.classList.contains("is-open")) {
+    closeSearchOverlay();
+  } else if (wifiPinModal?.classList.contains("open")) {
+    closeWifiPinModal();
+  } else if (allergenZoom?.classList.contains("is-open")) {
+    closeAllergenZoom();
+  } else if (dishSheet?.classList.contains("is-open")) {
+    closeSheet();
+  } else if (ratingsSheet?.classList.contains("is-open")) {
+    closeGenericSheet(ratingsSheet);
+  } else if (infoSheet?.classList.contains("is-open")) {
+    closeGenericSheet(infoSheet);
+  } else if (viewCategory?.classList.contains("is-active")) {
+    goHome();
+  }
+
+  setTimeout(() => {
+    historyLocked = false;
+  }, 0);
+}
+
+window.addEventListener("popstate", handleBackNavigation);
+
 function openSheet(plato) {
-  resetDishSheetDrag();
+  pushHistoryState({ modal: "dish" });
+  dishSheetDrag?.reset();
   const imgUrl = pick(plato, [
     "imagen_url",
     "image_url",
@@ -325,51 +359,72 @@ function openSheet(plato) {
 }
 
 // =============================
-// Dish sheet drag-to-close
+// Sheet drag-to-close
 // =============================
-let sheetDragStartY = 0;
-let sheetDragOffsetY = 0;
-let sheetDragging = false;
+function setupSheetDrag(sheetEl, closeFn, extraDragZone) {
+  if (!sheetEl) return null;
+  const card = sheetEl.querySelector(".sheetCard");
+  const handle = sheetEl.querySelector(".sheetHandle");
+  if (!card || !handle) return null;
 
-function setDishSheetDrag(y) {
-  if (!dishSheetCard) return;
-  dishSheetCard.style.transform = `translateX(-50%) translateY(${y}px)`;
-}
+  let startY = 0;
+  let offsetY = 0;
+  let dragging = false;
 
-function resetDishSheetDrag() {
-  if (!dishSheetCard) return;
-  dishSheetCard.style.transform = "";
-  dishSheetCard.classList.remove("is-dragging");
-}
-
-function onDishSheetPointerDown(e) {
-  if (!dishSheetCard || !dishSheet?.classList.contains("is-open")) return;
-  if (e.button != null && e.button !== 0) return;
-  sheetDragging = true;
-  sheetDragStartY = e.clientY;
-  sheetDragOffsetY = 0;
-  dishSheetCard.classList.add("is-dragging");
-  dishSheetCard.setPointerCapture?.(e.pointerId);
-}
-
-function onDishSheetPointerMove(e) {
-  if (!sheetDragging) return;
-  const dy = Math.max(0, e.clientY - sheetDragStartY);
-  sheetDragOffsetY = dy;
-  setDishSheetDrag(dy);
-}
-
-function onDishSheetPointerUp(e) {
-  if (!sheetDragging) return;
-  sheetDragging = false;
-  dishSheetCard?.releasePointerCapture?.(e.pointerId);
-  dishSheetCard?.classList.remove("is-dragging");
-  if (sheetDragOffsetY > 120) {
-    closeSheet();
-  } else {
-    resetDishSheetDrag();
+  function setDrag(y) {
+    card.style.transform = `translateX(-50%) translateY(${y}px)`;
   }
+
+  function reset() {
+    card.style.transform = "";
+    card.classList.remove("is-dragging");
+  }
+
+  function onDown(e) {
+    if (!sheetEl.classList.contains("is-open")) return;
+    if (e.button != null && e.button !== 0) return;
+    dragging = true;
+    startY = e.clientY;
+    offsetY = 0;
+    card.classList.add("is-dragging");
+    card.setPointerCapture?.(e.pointerId);
+  }
+
+  function onMove(e) {
+    if (!dragging) return;
+    const dy = Math.max(0, e.clientY - startY);
+    offsetY = dy;
+    setDrag(dy);
+  }
+
+  function onUp(e) {
+    if (!dragging) return;
+    dragging = false;
+    card.releasePointerCapture?.(e.pointerId);
+    card.classList.remove("is-dragging");
+    if (offsetY > 120) {
+      closeFn();
+    } else {
+      reset();
+    }
+  }
+
+  handle.addEventListener("pointerdown", onDown);
+  extraDragZone?.addEventListener("pointerdown", onDown);
+  window.addEventListener("pointermove", onMove);
+  window.addEventListener("pointerup", onUp);
+  window.addEventListener("pointercancel", onUp);
+
+  return { reset };
 }
+
+const dishSheetDrag = setupSheetDrag(dishSheet, closeSheet, sheetImageWrap);
+const ratingsSheetDrag = setupSheetDrag(ratingsSheet, () =>
+  closeGenericSheet(ratingsSheet),
+);
+const infoSheetDrag = setupSheetDrag(infoSheet, () =>
+  closeGenericSheet(infoSheet),
+);
 
 // =============================
 // Allergen zoom (lightbox)
@@ -382,6 +437,7 @@ const allergenZoomBackdrop = document.getElementById("allergenZoomBackdrop");
 
 function openAllergenZoom(src, title) {
   if (!allergenZoom) return;
+  pushHistoryState({ modal: "allergen" });
   allergenZoomImg.src = src;
   allergenZoomTitle.textContent = title || "AlÃ©rgeno";
   allergenZoom.classList.add("is-open");
@@ -519,133 +575,68 @@ function renderSearchDropdown() {
     return;
   }
 
-  const byCat = new Map();
+  const bySub = new Map();
   filtered.forEach((p) => {
-    const catId = String(p.categoria_id);
-    if (!byCat.has(catId)) byCat.set(catId, new Map());
-    const subMap = byCat.get(catId);
     const sc = getSubcatLabel(p);
-    if (!subMap.has(sc)) subMap.set(sc, []);
-    subMap.get(sc).push(p);
+    if (!bySub.has(sc)) bySub.set(sc, []);
+    bySub.get(sc).push(p);
   });
 
-  const categories = CATEGORIAS.filter((cat) =>
-    byCat.has(String(cat.id)),
-  );
-
-  if (!categories.length) {
-    const empty = document.createElement("div");
-    empty.className = "searchEmpty";
-    empty.textContent = "Sin resultados.";
-    searchDropdown.appendChild(empty);
-    return;
-  }
-
+  const subcats = Array.from(bySub.keys());
   const hasQuery = q.length > 0;
 
   if (hasQuery) {
-    if (!SEARCH_ACTIVE_CAT_ID || !byCat.has(String(SEARCH_ACTIVE_CAT_ID))) {
-      SEARCH_ACTIVE_CAT_ID = String(categories[0].id);
+    if (!SEARCH_ACTIVE_SUBCAT_KEY || !bySub.has(SEARCH_ACTIVE_SUBCAT_KEY)) {
+      SEARCH_ACTIVE_SUBCAT_KEY = subcats[0];
     }
-  } else if (
-    SEARCH_ACTIVE_CAT_ID &&
-    !byCat.has(String(SEARCH_ACTIVE_CAT_ID))
-  ) {
-    SEARCH_ACTIVE_CAT_ID = String(categories[0].id);
+  } else if (SEARCH_ACTIVE_SUBCAT_KEY && !bySub.has(SEARCH_ACTIVE_SUBCAT_KEY)) {
+    SEARCH_ACTIVE_SUBCAT_KEY = null;
   }
 
-  const activeSubMap = SEARCH_ACTIVE_CAT_ID
-    ? byCat.get(String(SEARCH_ACTIVE_CAT_ID))
-    : null;
-  if (activeSubMap && hasQuery) {
-    const activeSubKey = SEARCH_ACTIVE_SUBCAT_KEY || "";
-    const [activeCatId, activeSubLabel] = activeSubKey.split("::");
-    const activeMatches =
-      activeCatId === String(SEARCH_ACTIVE_CAT_ID) &&
-      activeSubMap.has(activeSubLabel);
-    if (!activeMatches) {
-      const firstSub = activeSubMap.keys().next().value;
-      SEARCH_ACTIVE_SUBCAT_KEY = `${SEARCH_ACTIVE_CAT_ID}::${firstSub}`;
-    }
-  }
+  subcats.forEach((sc) => {
+    const subOpen = SEARCH_ACTIVE_SUBCAT_KEY === sc;
+    const subWrap = document.createElement("div");
+    subWrap.className = "searchSubGroup";
 
-  categories.forEach((cat) => {
-    const catId = String(cat.id);
-    const subMap = byCat.get(catId);
-    if (!subMap) return;
-
-    const catOpen = SEARCH_ACTIVE_CAT_ID === catId;
-
-    const catWrap = document.createElement("div");
-    catWrap.className = `searchCat${catOpen ? " is-open" : ""}`;
-
-    const catToggle = document.createElement("button");
-    catToggle.type = "button";
-    catToggle.className = "searchCatToggle";
-    catToggle.setAttribute("aria-expanded", catOpen ? "true" : "false");
-    catToggle.addEventListener("click", () => {
-      if (SEARCH_ACTIVE_CAT_ID === catId) {
-        SEARCH_ACTIVE_CAT_ID = null;
-        SEARCH_ACTIVE_SUBCAT_KEY = null;
-      } else {
-        SEARCH_ACTIVE_CAT_ID = catId;
-        SEARCH_ACTIVE_SUBCAT_KEY = null;
-      }
+    const subToggle = document.createElement("button");
+    subToggle.type = "button";
+    subToggle.className = "searchSubToggle";
+    subToggle.setAttribute("aria-expanded", subOpen ? "true" : "false");
+    subToggle.addEventListener("click", () => {
+      SEARCH_ACTIVE_SUBCAT_KEY =
+        SEARCH_ACTIVE_SUBCAT_KEY === sc ? null : sc;
       renderSearchDropdown();
     });
 
-    const catTitle = document.createElement("h1");
-    catTitle.className = "searchCatTitle";
-    catTitle.textContent = safeText(cat.nombre);
-    catToggle.appendChild(catTitle);
-    catWrap.appendChild(catToggle);
+    const subTitle = document.createElement("h1");
+    subTitle.className = "searchSubTitle";
+    subTitle.textContent = sc;
 
-    const catBody = document.createElement("div");
-    catBody.className = "searchCatBody";
-    if (!catOpen) catBody.style.display = "none";
+    const arrow = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    arrow.setAttribute("viewBox", "0 0 24 24");
+    arrow.classList.add("dropdownArrow");
+    const arrowPath = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path",
+    );
+    arrowPath.setAttribute("d", "M8 5l8 7-8 7");
+    arrow.appendChild(arrowPath);
 
-    for (const [sc, items] of subMap.entries()) {
-      const subKey = `${catId}::${sc}`;
-      const subOpen = SEARCH_ACTIVE_SUBCAT_KEY === subKey && catOpen;
+    subToggle.appendChild(subTitle);
+    subToggle.appendChild(arrow);
+    subWrap.appendChild(subToggle);
 
-      const subWrap = document.createElement("div");
-      subWrap.className = "searchSubGroup";
+    const list = document.createElement("div");
+    list.className = `searchItems${subOpen ? " is-open" : ""}`;
 
-      const subToggle = document.createElement("button");
-      subToggle.type = "button";
-      subToggle.className = "searchSubToggle";
-      subToggle.setAttribute("aria-expanded", subOpen ? "true" : "false");
-      subToggle.addEventListener("click", () => {
-        if (SEARCH_ACTIVE_SUBCAT_KEY === subKey) {
-          SEARCH_ACTIVE_SUBCAT_KEY = null;
-        } else {
-          SEARCH_ACTIVE_CAT_ID = catId;
-          SEARCH_ACTIVE_SUBCAT_KEY = subKey;
-        }
-        renderSearchDropdown();
-      });
+    const items = bySub.get(sc) || [];
+    items.forEach((plato) => {
+      const row = buildSearchItemRow(plato);
+      list.appendChild(row);
+    });
 
-      const subTitle = document.createElement("h2");
-      subTitle.className = "searchSubTitle";
-      subTitle.textContent = sc;
-      subToggle.appendChild(subTitle);
-      subWrap.appendChild(subToggle);
-
-      const list = document.createElement("div");
-      list.className = `searchItems${subOpen ? " is-open" : ""}`;
-      if (!subOpen) list.style.display = "none";
-
-      items.forEach((plato) => {
-        const row = buildSearchItemRow(plato);
-        list.appendChild(row);
-      });
-
-      subWrap.appendChild(list);
-      catBody.appendChild(subWrap);
-    }
-
-    catWrap.appendChild(catBody);
-    searchDropdown.appendChild(catWrap);
+    subWrap.appendChild(list);
+    searchDropdown.appendChild(subWrap);
   });
 }
 
@@ -662,6 +653,7 @@ function goToItemFromSearch(plato) {
   if (clearSearch) clearSearch.style.visibility = "hidden";
 
   closeSearchOverlay();
+  pushHistoryState({ view: "category", catId });
   setView("category");
   renderSubcatChips(catId);
   renderDishList(catId);
@@ -892,7 +884,8 @@ function buildSearchItemRow(plato) {
 // =============================
 // Navigation
 // =============================
-function goCategory(catId) {
+function goCategory(catId, options = {}) {
+  const { push = true } = options;
   ACTIVE_CAT_ID = catId;
   ACTIVE_SUBCAT = "all";
   SEARCH_Q = "";
@@ -903,6 +896,7 @@ function goCategory(catId) {
   renderSubcatChips(catId);
   renderDishList(catId);
   window.scrollTo({ top: 0, behavior: "smooth" });
+  if (push) pushHistoryState({ view: "category", catId });
 }
 
 function goHome() {
@@ -986,8 +980,8 @@ function applyProfileToHome() {
   if (rating != null || googleReviewsUrl) {
     ratingBtn.style.display = "";
 
-    // Texto del botÃ³n (home): el usuario quiere que ponga "ReseÃ±as"
-    ratingPrimary.textContent = "ReseÃ±as";
+    // Texto del botÃ³n (home)
+    ratingPrimary.textContent = "Rese\u00F1as";
     if (ratingCount) {
       ratingSecondary.textContent = `${ratingCount} reseÃ±as`;
     } else if (rating != null) {
@@ -999,9 +993,9 @@ function applyProfileToHome() {
 
   // Info (opcional)
   const info = [];
-  if (pick(PROFILE, ["wifi", "wifi_name"])) info.push("Wiâ€‘Fi");
-  if (pick(PROFILE, ["telefono", "phone"])) info.push("TelÃ©fono");
-  if (pick(PROFILE, ["direccion", "address"])) info.push("DirecciÃ³n");
+  if (pick(PROFILE, ["wifi", "wifi_name"])) info.push("Wi\u2011Fi");
+  if (pick(PROFILE, ["telefono", "phone"])) info.push("Tel\u00E9fono");
+  if (pick(PROFILE, ["direccion", "address"])) info.push("Direcci\u00F3n");
   if (info.length) {
     infoBtn.style.display = "";
     infoSecondary.textContent = info.join(", ");
@@ -1093,6 +1087,8 @@ async function loadMenu() {
 
 function openRatingsSheet() {
   if (!PROFILE) return;
+  pushHistoryState({ modal: "ratings" });
+  ratingsSheetDrag?.reset();
   const rating = pick(PROFILE, ["rating", "valoracion", "stars"]);
   const count = pick(PROFILE, ["rating_count", "valoraciones", "reviews"]);
   ratingsValue.textContent = rating != null ? Number(rating).toFixed(1) : "-";
@@ -1147,6 +1143,8 @@ function openRatingsSheet() {
 
 function openInfoSheet() {
   if (!PROFILE) return;
+  pushHistoryState({ modal: "info" });
+  infoSheetDrag?.reset();
   const name = pick(PROFILE, [
     "nombre",
     "name",
@@ -1262,6 +1260,7 @@ clearSearch.addEventListener("click", () => {
   SEARCH_Q = "";
   searchInput.value = "";
   clearSearch.style.visibility = "hidden";
+  SEARCH_ACTIVE_SUBCAT_KEY = null;
   renderSearchDropdown();
   if (ACTIVE_CAT_ID) renderDishList(ACTIVE_CAT_ID);
 });
@@ -1269,6 +1268,7 @@ clearSearch.addEventListener("click", () => {
 searchInput.addEventListener("input", () => {
   SEARCH_Q = searchInput.value;
   clearSearch.style.visibility = SEARCH_Q ? "visible" : "hidden";
+  if (!SEARCH_Q) SEARCH_ACTIVE_SUBCAT_KEY = null;
   renderSearchDropdown();
   if (ACTIVE_CAT_ID) renderDishList(ACTIVE_CAT_ID);
 });
@@ -1281,11 +1281,6 @@ dishSheet.addEventListener("click", (e) => {
   if (t?.dataset?.close === "true") closeSheet();
 });
 
-dishSheetHandle?.addEventListener("pointerdown", onDishSheetPointerDown);
-sheetImageWrap?.addEventListener("pointerdown", onDishSheetPointerDown);
-window.addEventListener("pointermove", onDishSheetPointerMove);
-window.addEventListener("pointerup", onDishSheetPointerUp);
-window.addEventListener("pointercancel", onDishSheetPointerUp);
 
 ratingsSheet.addEventListener("click", (e) => {
   const t = e.target;
@@ -1340,6 +1335,7 @@ function showWifiResult(msg) {
 }
 
 function openWifiPinModal(ctx) {
+  pushHistoryState({ modal: "wifi" });
   _wifiCtx = { ...ctx, wifiPass: null };
   if (wifiPinSsid)
     wifiPinSsid.textContent = ctx.wifiName ? `Red: ${ctx.wifiName}` : "";
