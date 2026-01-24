@@ -1,4 +1,4 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 // =============================
 // Supabase (usa tus credenciales actuales)
@@ -22,7 +22,7 @@ function isUuid(v) {
   );
 }
 
-let clienteId = null; // siempre será UUID al final
+let clienteId = null; // siempre serÃ¡ UUID al final
 
 // =============================
 // DOM
@@ -51,6 +51,7 @@ const searchInput = document.getElementById("searchInput");
 const clearSearch = document.getElementById("clearSearch");
 const closeSearch = document.getElementById("closeSearch");
 const searchBackdrop = document.getElementById("searchBackdrop");
+const searchDropdown = document.getElementById("searchDropdown");
 
 const homeSearchBtn = document.getElementById("homeSearchBtn");
 const catSearchBtn = document.getElementById("catSearchBtn");
@@ -107,7 +108,7 @@ function normalize(str) {
 function formatPrice(v) {
   const n = Number(v);
   if (!Number.isFinite(n)) return "";
-  return `${n.toFixed(2)} €`;
+  return `${n.toFixed(2)} â‚¬`;
 }
 
 function baseUrl(path) {
@@ -166,9 +167,9 @@ function renderStars(container, value) {
   for (let i = 0; i < 5; i++) {
     const span = document.createElement("span");
     span.className = "star";
-    if (i < full) span.textContent = "★";
-    else if (i == full && half) span.textContent = "★";
-    else span.textContent = "☆";
+    if (i < full) span.textContent = "â˜…";
+    else if (i == full && half) span.textContent = "â˜…";
+    else span.textContent = "â˜†";
     container.appendChild(span);
   }
 }
@@ -238,6 +239,7 @@ function openSearch() {
   searchOverlay.classList.add("is-open");
   searchOverlay.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
+  renderSearchDropdown();
   setTimeout(() => searchInput.focus(), 50);
 }
 
@@ -311,7 +313,7 @@ const allergenZoomBackdrop = document.getElementById("allergenZoomBackdrop");
 function openAllergenZoom(src, title) {
   if (!allergenZoom) return;
   allergenZoomImg.src = src;
-  allergenZoomTitle.textContent = title || "Alérgeno";
+  allergenZoomTitle.textContent = title || "AlÃ©rgeno";
   allergenZoom.classList.add("is-open");
   allergenZoom.setAttribute("aria-hidden", "false");
 }
@@ -348,7 +350,7 @@ function renderHome() {
   if (!catsWithItems.length) {
     const p = document.createElement("p");
     p.className = "muted";
-    p.textContent = "Esta carta aún no tiene categorías con platos.";
+    p.textContent = "Esta carta aÃºn no tiene categorÃ­as con platos.";
     homeCategories.appendChild(p);
     return;
   }
@@ -410,6 +412,126 @@ function renderSubcatChips(catId) {
   });
 }
 
+function getSubcatLabel(plato) {
+  return (
+    safeText(pick(plato, ["subcategoria", "sub_category", "subcat"]))
+      .trim() || "Otros"
+  );
+}
+
+function matchesSearch(plato, q) {
+  if (!q) return true;
+  const name = normalize(plato.plato);
+  const desc = normalize(plato.descripcion);
+  return name.includes(q) || desc.includes(q);
+}
+
+function renderSearchDropdown() {
+  if (!searchDropdown) return;
+  searchDropdown.innerHTML = "";
+
+  if (!PLATOS.length || !CATEGORIAS.length) {
+    const empty = document.createElement("div");
+    empty.className = "searchEmpty";
+    empty.textContent = "Cargando...";
+    searchDropdown.appendChild(empty);
+    return;
+  }
+
+  const q = normalize(SEARCH_Q);
+  const filtered = PLATOS.filter((p) => matchesSearch(p, q));
+
+  if (!filtered.length) {
+    const empty = document.createElement("div");
+    empty.className = "searchEmpty";
+    empty.textContent = "Sin resultados.";
+    searchDropdown.appendChild(empty);
+    return;
+  }
+
+  const byCat = new Map();
+  filtered.forEach((p) => {
+    const catId = String(p.categoria_id);
+    if (!byCat.has(catId)) byCat.set(catId, new Map());
+    const subMap = byCat.get(catId);
+    const sc = getSubcatLabel(p);
+    if (!subMap.has(sc)) subMap.set(sc, []);
+    subMap.get(sc).push(p);
+  });
+
+  CATEGORIAS.forEach((cat) => {
+    const subMap = byCat.get(String(cat.id));
+    if (!subMap) return;
+
+    const group = document.createElement("div");
+    group.className = "searchGroup";
+
+    const title = document.createElement("div");
+    title.className = "searchGroupTitle";
+    title.textContent = safeText(cat.nombre);
+    group.appendChild(title);
+
+    for (const [sc, items] of subMap.entries()) {
+      const sub = document.createElement("div");
+      sub.className = "searchSubGroup";
+
+      const subTitle = document.createElement("div");
+      subTitle.className = "searchSubTitle";
+      subTitle.textContent = sc;
+      sub.appendChild(subTitle);
+
+      const list = document.createElement("div");
+      list.className = "searchItems";
+
+      items.forEach((plato) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "searchItem";
+        btn.addEventListener("click", () => {
+          goToItemFromSearch(plato);
+        });
+
+        const name = document.createElement("div");
+        name.className = "searchItemName";
+        name.textContent = safeText(plato.plato);
+
+        const meta = document.createElement("div");
+        meta.className = "searchItemMeta";
+        const price = plato.precio != null ? formatPrice(plato.precio) : "";
+        meta.textContent = price || safeText(plato.descripcion || "");
+
+        btn.appendChild(name);
+        if (meta.textContent) btn.appendChild(meta);
+        list.appendChild(btn);
+      });
+
+      sub.appendChild(list);
+      group.appendChild(sub);
+    }
+
+    searchDropdown.appendChild(group);
+  });
+}
+
+function goToItemFromSearch(plato) {
+  const catId = String(plato.categoria_id);
+  const subcatRaw = safeText(
+    pick(plato, ["subcategoria", "sub_category", "subcat"]),
+  ).trim();
+
+  ACTIVE_CAT_ID = catId;
+  ACTIVE_SUBCAT = subcatRaw || "all";
+  SEARCH_Q = "";
+  if (searchInput) searchInput.value = "";
+  if (clearSearch) clearSearch.style.visibility = "hidden";
+
+  closeSearchOverlay();
+  setView("category");
+  renderSubcatChips(catId);
+  renderDishList(catId);
+  openSheet(plato);
+}
+
 function passesSearch(plato) {
   const q = normalize(SEARCH_Q);
   if (!q) return true;
@@ -420,7 +542,7 @@ function passesSearch(plato) {
 
 function renderDishList(catId) {
   const cat = CATEGORIAS.find((c) => String(c.id) === String(catId));
-  categoryTitle.textContent = cat ? cat.nombre : "Categoría";
+  categoryTitle.textContent = cat ? cat.nombre : "CategorÃ­a";
 
   dishList.innerHTML = "";
 
@@ -439,12 +561,12 @@ function renderDishList(catId) {
     empty.className = "empty";
     empty.textContent = SEARCH_Q
       ? "No hay resultados."
-      : "No hay platos en esta sección.";
+      : "No hay platos en esta secciÃ³n.";
     dishList.appendChild(empty);
     return;
   }
 
-  // Si existen subcategorías, pintamos separadores por grupo (como NordQR)
+  // Si existen subcategorÃ­as, pintamos separadores por grupo (como NordQR)
   const hasSubcats = PLATOS.some(
     (p) =>
       String(p.categoria_id) === String(catId) &&
@@ -494,7 +616,7 @@ function buildDishRow(plato) {
   price.className = "dishPrice";
   price.textContent = plato.precio != null ? formatPrice(plato.precio) : "";
 
-  // iconitos alérgenos (tipo NordQR: justo al lado del nombre)
+  // iconitos alÃ©rgenos (tipo NordQR: justo al lado del nombre)
   const alergs = Array.isArray(plato.alergenos) ? plato.alergenos : [];
   if (alergs.length) {
     const badgeWrap = document.createElement("span");
@@ -511,7 +633,7 @@ function buildDishRow(plato) {
       const url = allergenKeyToUrl(key);
       if (url) img.src = url;
       img.onerror = () => {
-        s.textContent = "•";
+        s.textContent = "â€¢";
       };
       s.appendChild(img);
       badgeWrap.appendChild(s);
@@ -584,7 +706,7 @@ function goHome() {
 // =============================
 async function loadProfileIfExists() {
   // Intentamos dos nombres para no romperte si ya has creado uno.
-  const candidates = ["Perfil_publico"]; // 👈 fuente pública (sin wifi_pass)
+  const candidates = ["Perfil_publico"]; // ðŸ‘ˆ fuente pÃºblica (sin wifi_pass)
   for (const table of candidates) {
     try {
       const { data, error } = await db
@@ -637,8 +759,8 @@ function applyProfileToHome() {
     cover.style.background = "linear-gradient(135deg, #d7d7dd, #f5f5f7)";
   }
 
-  // Reseñas / Rating (opcional)
-  // Mostramos el "botón de reseñas" si hay rating o si existe google_place_id (para abrir Google Maps).
+  // ReseÃ±as / Rating (opcional)
+  // Mostramos el "botÃ³n de reseÃ±as" si hay rating o si existe google_place_id (para abrir Google Maps).
   const rating = pick(PROFILE, ["rating", "valoracion", "stars"]);
   const ratingCount = pick(PROFILE, [
     "rating_count",
@@ -650,12 +772,12 @@ function applyProfileToHome() {
   if (rating != null || googleReviewsUrl) {
     ratingBtn.style.display = "";
 
-    // Texto del botón (home): el usuario quiere que ponga "Reseñas"
-    ratingPrimary.textContent = "Reseñas";
+    // Texto del botÃ³n (home): el usuario quiere que ponga "ReseÃ±as"
+    ratingPrimary.textContent = "ReseÃ±as";
     if (ratingCount) {
-      ratingSecondary.textContent = `${ratingCount} reseñas`;
+      ratingSecondary.textContent = `${ratingCount} reseÃ±as`;
     } else if (rating != null) {
-      ratingSecondary.textContent = `${Number(rating).toFixed(1)} ★`;
+      ratingSecondary.textContent = `${Number(rating).toFixed(1)} â˜…`;
     } else {
       ratingSecondary.textContent = "Ver en Google";
     }
@@ -663,9 +785,9 @@ function applyProfileToHome() {
 
   // Info (opcional)
   const info = [];
-  if (pick(PROFILE, ["wifi", "wifi_name"])) info.push("Wi‑Fi");
-  if (pick(PROFILE, ["telefono", "phone"])) info.push("Teléfono");
-  if (pick(PROFILE, ["direccion", "address"])) info.push("Dirección");
+  if (pick(PROFILE, ["wifi", "wifi_name"])) info.push("Wiâ€‘Fi");
+  if (pick(PROFILE, ["telefono", "phone"])) info.push("TelÃ©fono");
+  if (pick(PROFILE, ["direccion", "address"])) info.push("DirecciÃ³n");
   if (info.length) {
     infoBtn.style.display = "";
     infoSecondary.textContent = info.join(", ");
@@ -686,12 +808,12 @@ function applyProfileToHome() {
 }
 
 async function loadMenu() {
-  dishList.innerHTML = '<div class="loading">Cargando…</div>';
+  dishList.innerHTML = '<div class="loading">Cargandoâ€¦</div>';
 
   if (!clienteParam) {
-    placeTitle.textContent = "URL inválida";
+    placeTitle.textContent = "URL invÃ¡lida";
     homeCategories.innerHTML =
-      '<p class="muted">Falta el parámetro <b>?cliente=</b> (UUID o slug) o <b>?bar=</b>.</p>';
+      '<p class="muted">Falta el parÃ¡metro <b>?cliente=</b> (UUID o slug) o <b>?bar=</b>.</p>';
     return;
   }
 
@@ -715,7 +837,7 @@ async function loadMenu() {
       return;
     }
     clienteId = perfilBySlug.user_id;
-    // (WiFi PIN) guardamos también en el contexto si ya existe
+    // (WiFi PIN) guardamos tambiÃ©n en el contexto si ya existe
     if (_wifiCtx) _wifiCtx.clienteId = clienteId;
   }
 
@@ -746,6 +868,7 @@ async function loadMenu() {
     PLATOS = Array.isArray(platos) ? platos : [];
 
     renderHome();
+    renderSearchDropdown();
     setView("home");
   } catch (e) {
     console.error(e);
@@ -797,7 +920,7 @@ function openRatingsSheet() {
   if (finalReviewsUrl) {
     openReviewsBtn.style.display = "";
     openReviewsBtn.textContent = writeReviewUrl
-      ? "Escribir reseña en Google"
+      ? "Escribir reseÃ±a en Google"
       : "Ver en Google";
     openReviewsBtn.onclick = () =>
       window.open(finalReviewsUrl, "_blank", "noopener");
@@ -872,7 +995,7 @@ function openInfoSheet() {
   if (wifiName) {
     const sub = wifiPass ? `${wifiName}` : `${wifiName}`;
     infoRows.appendChild(
-      row("📶", "Wi‑Fi", sub, "Ver clave", () => {
+      row("ðŸ“¶", "Wiâ€‘Fi", sub, "Ver clave", () => {
         openWifiPinModal({ wifiName, clienteId });
       }),
     );
@@ -880,7 +1003,7 @@ function openInfoSheet() {
 
   if (telefono) {
     infoRows.appendChild(
-      row("📞", "Teléfono", telefono, "Llamar", () => {
+      row("ðŸ“ž", "TelÃ©fono", telefono, "Llamar", () => {
         window.location.href = `tel:${String(telefono).replace(/\s+/g, "")}`;
       }),
     );
@@ -888,7 +1011,7 @@ function openInfoSheet() {
 
   if (direccion) {
     infoRows.appendChild(
-      row("📍", "Dirección", direccion, "Abrir", () => {
+      row("ðŸ“", "DirecciÃ³n", direccion, "Abrir", () => {
         window.open(
           `https://www.google.com/maps?q=${encodeURIComponent(direccion)}`,
           "_blank",
@@ -915,19 +1038,7 @@ ratingBtn.addEventListener("click", () => {
 infoBtn.addEventListener("click", openInfoSheet);
 
 homeSearchBtn.addEventListener("click", () => {
-  // Si estás en home, buscamos en TODA la carta y llevamos al primer match.
-  // Para simplificar: abrimos overlay y filtramos dentro de la última categoría visitada o la primera.
-  if (!ACTIVE_CAT_ID) {
-    const firstCat = CATEGORIAS.find((c) =>
-      PLATOS.some((p) => String(p.categoria_id) === String(c.id)),
-    );
-    if (firstCat) ACTIVE_CAT_ID = String(firstCat.id);
-  }
-  if (ACTIVE_CAT_ID) {
-    setView("category");
-    renderSubcatChips(ACTIVE_CAT_ID);
-    renderDishList(ACTIVE_CAT_ID);
-  }
+  // Mantener en home: el buscador ahora es un dropdown global
   openSearch();
 });
 
@@ -937,12 +1048,14 @@ clearSearch.addEventListener("click", () => {
   SEARCH_Q = "";
   searchInput.value = "";
   clearSearch.style.visibility = "hidden";
+  renderSearchDropdown();
   if (ACTIVE_CAT_ID) renderDishList(ACTIVE_CAT_ID);
 });
 
 searchInput.addEventListener("input", () => {
   SEARCH_Q = searchInput.value;
   clearSearch.style.visibility = SEARCH_Q ? "visible" : "hidden";
+  renderSearchDropdown();
   if (ACTIVE_CAT_ID) renderDishList(ACTIVE_CAT_ID);
 });
 
@@ -980,7 +1093,7 @@ document.addEventListener("keydown", (e) => {
 loadMenu();
 
 // =============================
-// Wi‑Fi PIN modal (revelar clave)
+// Wiâ€‘Fi PIN modal (revelar clave)
 // =============================
 const wifiPinModal = document.getElementById("wifiPinModal");
 const wifiPinBackdrop = document.getElementById("wifiPinBackdrop");
@@ -1049,28 +1162,28 @@ async function fetchWifiPass() {
     return;
   }
 
-  // ✅ AQUÍ ESTABA EL PROBLEMA
+  // âœ… AQUÃ ESTABA EL PROBLEMA
   const wifi = data[0];
 
-  // Mostrar contraseña
+  // Mostrar contraseÃ±a
   wifiPasswordEl.textContent = wifi.wifi_pass;
 
-  // Activar botón copiar
+  // Activar botÃ³n copiar
   copyWifiBtn.disabled = false;
 
   // Copiar al portapapeles
   copyWifiBtn.onclick = async () => {
     try {
       await navigator.clipboard.writeText(wifi.wifi_pass);
-      copyWifiBtn.textContent = "Copiado ✓";
+      copyWifiBtn.textContent = "Copiado âœ“";
       setTimeout(() => (copyWifiBtn.textContent = "Copiar"), 1500);
     } catch (e) {
-      alert("No se pudo copiar la contraseña");
+      alert("No se pudo copiar la contraseÃ±a");
     }
   };
 
   if (error) {
-    showWifiError("No se pudo verificar el PIN. Inténtalo de nuevo.");
+    showWifiError("No se pudo verificar el PIN. IntÃ©ntalo de nuevo.");
     return null;
   }
 
@@ -1106,3 +1219,6 @@ wifiPinCopy?.addEventListener("click", async () => {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeWifiPinModal();
 });
+
+
+

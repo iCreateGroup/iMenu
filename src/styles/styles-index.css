@@ -221,6 +221,55 @@ body{
 .searchField svg{width:20px; height:20px; fill:none; stroke:#111; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
 .searchField input{border:0; outline:0; font-size:16px; flex:1}
 .searchField .iconBtn{background:transparent; color:#111; width:34px; height:34px; border-radius:10px}
+.searchDropdown{
+  margin-top:10px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#fff;
+  max-height:60vh;
+  overflow:auto;
+}
+.searchGroup{padding:10px 12px 6px}
+.searchGroup + .searchGroup{border-top:1px solid var(--line)}
+.searchGroupTitle{
+  font-weight:900;
+  font-size:14px;
+  margin-bottom:6px;
+}
+.searchSubGroup{
+  padding-left:10px;
+  margin-bottom:8px;
+  border-left:2px solid #f0f0f3;
+}
+.searchSubTitle{
+  font-weight:800;
+  font-size:12px;
+  color:var(--muted);
+  margin:6px 0 6px;
+  text-transform:capitalize;
+}
+.searchItems{display:flex; flex-direction:column; gap:6px}
+.searchItem{
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:12px;
+  padding:10px 12px;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  cursor:pointer;
+}
+.searchItem:hover{background:#fafafb}
+.searchItem:active{background:#f2f2f5}
+.searchItemName{font-weight:800; font-size:14px}
+.searchItemMeta{color:var(--muted); font-weight:700; font-size:12px}
+.searchEmpty{
+  padding:14px 12px;
+  color:var(--muted);
+  font-weight:700;
+}
 .ghostBtn{margin-top:10px; width:100%; border:1px solid var(--line); background:#fff; border-radius:14px; padding:12px; font-weight:800}
 
 /* Floating CTA */
