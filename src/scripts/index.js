@@ -79,6 +79,7 @@ const infoTitle = document.getElementById("infoTitle");
 const mapWrap = document.getElementById("mapWrap");
 const mapFrame = document.getElementById("mapFrame");
 const infoRows = document.getElementById("infoRows");
+if (clearSearch) clearSearch.style.visibility = "hidden";
 
 // =============================
 // State
@@ -241,6 +242,7 @@ function openSearch() {
   if (!searchOverlay.classList.contains("is-open")) {
     pushHistoryState({ modal: "search" });
   }
+  if (clearSearch) clearSearch.style.visibility = SEARCH_Q ? "visible" : "hidden";
   searchOverlay.classList.add("is-open");
   searchOverlay.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
