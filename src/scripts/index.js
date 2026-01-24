@@ -577,8 +577,8 @@ function renderSearchDropdown() {
   });
 
   const subcats = Array.from(bySub.keys());
-  if (!SEARCH_ACTIVE_SUBCAT_KEY || !bySub.has(SEARCH_ACTIVE_SUBCAT_KEY)) {
-    SEARCH_ACTIVE_SUBCAT_KEY = subcats[0];
+  if (SEARCH_ACTIVE_SUBCAT_KEY && !bySub.has(SEARCH_ACTIVE_SUBCAT_KEY)) {
+    SEARCH_ACTIVE_SUBCAT_KEY = null;
   }
 
   subcats.forEach((sc) => {
