@@ -231,29 +231,10 @@ function getGoogleReviewsSearchUrl(profile) {
 
 function setView(which) {
   const home = which === "home";
-  const show = home ? viewHome : viewCategory;
-  const hide = home ? viewCategory : viewHome;
-  const animMs = 280;
-
-  if (show === viewHome) show.classList.remove("is-hidden");
-  else show.classList.add("is-active");
-  show.setAttribute("aria-hidden", "false");
-  hide.setAttribute("aria-hidden", "true");
-
-  show.classList.remove("is-fade-out");
-  show.classList.add("is-fade-in");
-  hide.classList.remove("is-fade-in");
-  hide.classList.add("is-fade-out");
-
-  setTimeout(() => {
-    hide.classList.remove("is-fade-out");
-    if (hide === viewHome) hide.classList.add("is-hidden");
-    else hide.classList.remove("is-active");
-  }, animMs);
-
-  setTimeout(() => {
-    show.classList.remove("is-fade-in");
-  }, animMs);
+  viewHome.classList.toggle("is-hidden", !home);
+  viewCategory.classList.toggle("is-active", !home);
+  viewHome.setAttribute("aria-hidden", home ? "false" : "true");
+  viewCategory.setAttribute("aria-hidden", home ? "true" : "false");
 }
 
 function openSearch() {
