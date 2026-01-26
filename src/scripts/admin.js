@@ -53,8 +53,6 @@ const perfilWifi = document.getElementById("perfilWifi");
 const perfilWifiPass = document.getElementById("perfilWifiPass");
 const perfilWifiPin = document.getElementById("perfilWifiPin");
 const perfilReviews = document.getElementById("perfilReviews");
-const perfilRating = document.getElementById("perfilRating");
-const perfilRatingCount = document.getElementById("perfilRatingCount");
 const perfilPortadaUrl = document.getElementById("perfilPortadaUrl");
 const perfilPortadaFile = document.getElementById("perfilPortadaFile");
 const perfilPortadaPreview = document.getElementById("perfilPortadaPreview");
@@ -257,8 +255,6 @@ async function cargarPerfil() {
     if (perfilWifiPin) perfilWifiPin.value = "";
 
     perfilReviews.value = safeText(data.reviews_url);
-    perfilRating.value = data.rating ?? "";
-    perfilRatingCount.value = data.rating_count ?? "";
     perfilPortadaUrl.value = safeText(data.portada_url);
     perfilGooglePlaceId.value = safeText(data.google_place_id);
     showPreview(perfilPortadaPreview, data.portada_url);
@@ -305,9 +301,6 @@ document.getElementById("guardarPerfilBtn").onclick = async () => {
 
       reviews_url: perfilReviews.value.trim() || null,
       google_place_id: perfilGooglePlaceId.value.trim() || null,
-      rating: perfilRating.value !== "" ? Number(perfilRating.value) : null,
-      rating_count:
-        perfilRatingCount.value !== "" ? Number(perfilRatingCount.value) : null,
       portada_url: portadaFinal || null,
     };
 
