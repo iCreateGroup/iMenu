@@ -45,6 +45,7 @@ const loginError = document.getElementById("loginError");
 
 // PERFIL
 const perfilNombre = document.getElementById("perfilNombre");
+const perfilUid = document.getElementById("perfilUid");
 const perfilSlug = document.getElementById("perfilSlug");
 const perfilTelefono = document.getElementById("perfilTelefono");
 const perfilDireccion = document.getElementById("perfilDireccion");
@@ -192,8 +193,27 @@ document.getElementById("loginBtn").onclick = async () => {
 };
 
 document.getElementById("logoutBtn").onclick = async () => {
-  await supabase.auth.signOut();
-  location.reload();
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) logoutBtn.disabled = true;
+
+  try {
+    // "local" asegura borrar sesión incluso si falla la red
+    let result;
+    try {
+      result = await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      result = await supabase.auth.signOut();
+    }
+    if (result?.error) throw result.error;
+  } catch (e) {
+    console.warn("Logout:", e?.message || e);
+  } finally {
+    user = null;
+    if (loginForm) loginForm.style.display = "block";
+    if (adminPanel) adminPanel.style.display = "none";
+    if (perfilUid) perfilUid.value = "";
+    if (logoutBtn) logoutBtn.disabled = false;
+  }
 };
 
 // ========== TABS ==========
@@ -874,6 +894,7 @@ platosSearch?.addEventListener("input", renderPlatosFiltrados);
 // ========== INIT ==========
 async function cargarTodo() {
   cargarAlergenosGrid();
+  if (perfilUid) perfilUid.value = safeText(user?.id);
   await cargarPerfil();
   await cargarCategorias();
   await cargarPlatos();
