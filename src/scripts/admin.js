@@ -171,10 +171,18 @@ async function uploadToStorage(file, folder) {
   const baseFolder = folder ? `${currentUser.id}/${folder}` : currentUser.id;
   const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
   const path = `${baseFolder}/${crypto.randomUUID()}.${ext}`;
+  const contentType =
+    file.type || (ext === "png" ? "image/png" : "image/jpeg");
+  console.log("[upload]", {
+    path,
+    size: file.size,
+    type: contentType,
+    user: currentUser.id,
+  });
 
   const { error: upErr } = await supabase.storage
     .from(STORAGE_BUCKET)
-    .upload(path, file, { upsert: true, contentType: file.type });
+    .upload(path, file, { upsert: true, contentType });
 
   if (upErr) {
     throw new Error(`No se pudo subir la imagen a Storage: ${upErr.message}`);
