@@ -983,11 +983,6 @@ function applyProfileToHome() {
   // Reseñas / Rating (opcional)
   // Mostramos el "botón de reseñas" si hay rating o si existe google_place_id (para abrir Google Maps).
   const rating = pick(PROFILE, ["rating", "valoracion", "stars"]);
-  const ratingCount = pick(PROFILE, [
-    "rating_count",
-    "valoraciones",
-    "reviews",
-  ]);
   const googleReviewsUrl = getGoogleReviewsSearchUrl(PROFILE);
 
   if (rating != null || googleReviewsUrl) {
@@ -995,13 +990,7 @@ function applyProfileToHome() {
 
     // Texto del botón (home)
     ratingPrimary.textContent = "Rese\u00F1as";
-    if (ratingCount) {
-      ratingSecondary.textContent = `${ratingCount} reseñas`;
-    } else if (rating != null) {
-      ratingSecondary.textContent = `${Number(rating).toFixed(1)} ★`;
-    } else {
-      ratingSecondary.textContent = "Ver en Google";
-    }
+    ratingSecondary.textContent = "Ver reseñas";
   }
 
   // Info (opcional)
@@ -1103,10 +1092,10 @@ function openRatingsSheet() {
   pushHistoryState({ modal: "ratings" });
   ratingsSheetDrag?.reset();
   const rating = pick(PROFILE, ["rating", "valoracion", "stars"]);
-  const count = pick(PROFILE, ["rating_count", "valoraciones", "reviews"]);
   ratingsValue.textContent = rating != null ? Number(rating).toFixed(1) : "-";
   renderStars(ratingsStars, rating || 0);
-  ratingsCount.textContent = count ? `(${count})` : "";
+  ratingsCount.textContent = "";
+  ratingsCount.style.display = "none";
 
   // Barras (UI): si no hay desglose real, aproximamos con el rating
   const aspects = ["Comida", "Ambiente", "Servicio", "Limpieza", "Precio"];
