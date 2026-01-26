@@ -11,6 +11,13 @@ const STORAGE_BUCKET = "imenu";
 
 let user = null;
 
+// Debug helpers (solo para consola)
+window.imenuAdmin = {
+  supabase,
+  getSession: () => supabase.auth.getSession(),
+  getUser: () => user,
+};
+
 const ALERGENOS = [
   "gluten",
   "crustaceos",
