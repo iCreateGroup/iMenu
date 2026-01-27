@@ -1340,6 +1340,7 @@ function showWifiResult(msg) {
 function openWifiPinModal(ctx) {
   pushHistoryState({ modal: "wifi" });
   _wifiCtx = { ...ctx, wifiPass: null };
+  window.imenuPublic.wifiCtx = _wifiCtx;
   if (wifiPinSsid)
     wifiPinSsid.textContent = ctx.wifiName ? `Red: ${ctx.wifiName}` : "";
   showWifiError("");
