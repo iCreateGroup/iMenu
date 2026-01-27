@@ -1344,6 +1344,10 @@ function openWifiPinModal(ctx) {
   showWifiError("");
   showWifiResult("");
   if (wifiPinInput) wifiPinInput.value = "";
+  if (wifiPinCopy) {
+    wifiPinCopy.disabled = true;
+    wifiPinCopy.textContent = "Copiar clave";
+  }
   if (wifiPinModal) {
     wifiPinModal.setAttribute("aria-hidden", "false");
     wifiPinModal.classList.add("open");
@@ -1368,37 +1372,17 @@ async function fetchWifiPass() {
     return null;
   }
 
+  if (!_wifiCtx.clienteId) {
+    showWifiError("No se pudo identificar el local.");
+    return null;
+  }
+
   showWifiError("");
 
-  if (error) {
-    showPinError("Error al validar el PIN");
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    showPinError("PIN incorrecto");
-    return;
-  }
-
-  // ✅ AQUÍ ESTABA EL PROBLEMA
-  const wifi = data[0];
-
-  // Mostrar contraseña
-  wifiPasswordEl.textContent = wifi.wifi_pass;
-
-  // Activar botón copiar
-  copyWifiBtn.disabled = false;
-
-  // Copiar al portapapeles
-  copyWifiBtn.onclick = async () => {
-    try {
-      await navigator.clipboard.writeText(wifi.wifi_pass);
-      copyWifiBtn.textContent = "Copiado ✓";
-      setTimeout(() => (copyWifiBtn.textContent = "Copiar"), 1500);
-    } catch (e) {
-      alert("No se pudo copiar la contraseña");
-    }
-  };
+  const { data, error } = await supabase.rpc("imenu_get_wifi_by_user", {
+    p_user_id: _wifiCtx.clienteId,
+    p_pin: pin,
+  });
 
   if (error) {
     showWifiError("No se pudo verificar el PIN. Inténtalo de nuevo.");
@@ -1416,6 +1400,7 @@ async function fetchWifiPass() {
 
   _wifiCtx.wifiPass = String(pass);
   showWifiResult(`Clave: ${_wifiCtx.wifiPass}`);
+  if (wifiPinCopy) wifiPinCopy.disabled = false;
   return _wifiCtx.wifiPass;
 }
 
