@@ -344,7 +344,16 @@ document.getElementById("guardarPerfilBtn").onclick = async () => {
       portada_url: portadaFinal || null,
     };
 
-    const { error } = await db.from("Perfil").upsert(payload);
+    const { data: existing, error: existsErr } = await db
+      .from("Perfil")
+      .select("user_id")
+      .eq("user_id", currentUser.id)
+      .maybeSingle();
+    if (existsErr) throw existsErr;
+
+    const { error } = existing
+      ? await db.from("Perfil").update(payload).eq("user_id", currentUser.id)
+      : await db.from("Perfil").insert(payload);
     if (error) throw error;
 
     // Si el usuario ha escrito un PIN, lo guardamos (hasheado) via RPC
