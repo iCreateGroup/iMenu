@@ -144,7 +144,7 @@ function showPreview(el, url) {
     return;
   }
   el.style.display = "";
-  el.innerHTML = `<img src="${url}" alt="preview" style="max-width:100%;border-radius:12px;display:block"/>`;
+  el.innerHTML = `<img src="${url}" alt="preview" style="max-width:100%;border-radius:12px;display:block" onerror="this.style.display='none';this.parentElement.style.background='transparent'"/>`;
 }
 
 function normalizeAllergenKey(v) {
@@ -767,7 +767,7 @@ function renderPlatosList(platos) {
     div.dataset.id = p.id;
 
     const img = p.imagen_url
-      ? `<img src="${p.imagen_url}" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:10px;margin-right:10px"/>`
+      ? `<img src="${p.imagen_url}" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:10px;margin-right:10px" onerror="this.style.display='none';this.parentElement.style.background='transparent'"/>`
       : "";
 
     const catName = categoriaNombreById(p.categoria_id);
@@ -832,7 +832,7 @@ function editarPlato(id) {
   if (platoEditAside && platoEditAsideBody) {
     const catName = categoriaNombreById(p.categoria_id);
     const thumb = p.imagen_url
-      ? `<img class="edit-aside-thumb" src="${p.imagen_url}" alt="">`
+      ? `<img class="edit-aside-thumb" src="${p.imagen_url}" alt="" onerror="this.style.display='none';this.parentElement.style.background='transparent'">`
       : `<div class="edit-aside-thumb"></div>`;
 
     const tags = [];
