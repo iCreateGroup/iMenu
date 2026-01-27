@@ -18,13 +18,6 @@ import adminScriptUrl from "../scripts/admin.js?url";
 
   <AdminPlaceIdModal />
 
-  <script>
-    if (location.pathname.endsWith("/admin.html/")) {
-      const next = location.pathname.replace(/\/$/, "");
-      location.replace(next + location.search + location.hash);
-    }
-  </script>
-
   <!-- SortableJS (necesario para ordenar en MOVIL y PC) -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 

@@ -1,5 +1,10 @@
 ---
 const { title = "iMenu" } = Astro.props;
+const baseHref = Astro.base
+  ? Astro.base.endsWith("/")
+    ? Astro.base
+    : `${Astro.base}/`
+  : "/";
 ---
 
 <!doctype html>
@@ -7,6 +12,7 @@ const { title = "iMenu" } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href={baseHref} />
     <title>{title}</title>
     <slot name="head" />
   </head>
